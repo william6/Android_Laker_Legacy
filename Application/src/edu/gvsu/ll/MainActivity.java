@@ -17,10 +17,18 @@ public class MainActivity extends Activity {
         //Create database manager
         File fInternalDir = getFilesDir();	//app data directory
         String strDbName = "Laker_Legacy_DB";
-        DatabaseManager dbManager = new DatabaseManager(getApplicationContext(), strDbName, fInternalDir.getAbsolutePath() + "database/", 1);   
+        DatabaseManager dbManager = new DatabaseManager(getApplicationContext(), strDbName, fInternalDir.getAbsolutePath() + "/database/", 1);   
         
         //query database to make sure it's working
         Cursor cursor = dbManager.query("SELECT * FROM " + GTblVal.TBL_DONOR);
+        cursor.moveToFirst();
+        for(int i=0; i<cursor.getCount(); i++){
+        	for(int j=0; j<cursor.getColumnCount(); j++){
+        		Log.d(cursor.getColumnName(j).toUpperCase() + ": " + cursor.getString(j));
+        	}
+        	cursor.moveToNext();
+        }
+        cursor = dbManager.query("SELECT * FROM " + GTblVal.TBL_IMAGE);
         cursor.moveToFirst();
         for(int i=0; i<cursor.getCount(); i++){
         	for(int j=0; j<cursor.getColumnCount(); j++){

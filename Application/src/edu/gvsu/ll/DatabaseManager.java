@@ -6,7 +6,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseManager
 {
@@ -59,33 +58,46 @@ public class DatabaseManager
 		//create MONUMENT table
 		String command = "CREATE TABLE " + GTblVal.TBL_MONUMENT + " ( " +
 				GTblVal.COL_NAME + " TEXT (128) PRIMARY KEY, " +
-				GTblVal.COL_ADDR + " TEXT (256), " +
-				GTblVal.COL_CAMPUS + " TEXT (32), " +
+				GTblVal.COL_ADDR + " TEXT (256) NOT NULL, " +
+				GTblVal.COL_CAMPUS + " TEXT (32) NOT NULL, " +
 				GTblVal.COL_EST + " DATE, " +
 				GTblVal.COL_GPS + " TEXT (64) )";
 		executeSQL(command);
 		
+		//create IMAGE table
+		command = "CREATE TABLE " + GTblVal.TBL_IMAGE + " ( " +
+				GTblVal.COL_IMG_ID + " INTEGER PRIMARY KEY, " +
+				GTblVal.COL_FILEPATH + " TEXT (256) NOT NULL, " +
+				GTblVal.COL_NAME + " TEXT(128) REFERENCES " + GTblVal.TBL_MONUMENT + "(" + GTblVal.COL_NAME + ") )";
+		executeSQL(command);
+		
 		//create DONOR table
 		command = "CREATE TABLE " + GTblVal.TBL_DONOR + " ( " +
-				GTblVal.COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-				GTblVal.COL_NAME + " TEXT (128), " +
-				GTblVal.COL_BIO + " TEXT (" + GTblVal.N_BIO_MAX + ") )";
+				GTblVal.COL_DON_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+				GTblVal.COL_NAME + " TEXT (128) NOT NULL, " +
+				GTblVal.COL_BIO + " TEXT (" + GTblVal.N_BIO_MAX + ") NOT NULL, " +
+				GTblVal.COL_IMG_ID + " INTEGER REFERENCES " + GTblVal.TBL_IMAGE + "(" + GTblVal.COL_IMG_ID + ") )";
 		executeSQL(command);
 		
 		//create MONUMENT_DONOR table
 		command = "CREATE TABLE " + GTblVal.TBL_MON_DON + " ( " +
 				GTblVal.COL_NAME + " TEXT(128) REFERENCES " + GTblVal.TBL_MONUMENT + "(" + GTblVal.COL_NAME + "), " +
-				GTblVal.COL_ID + " INTEGER REFERENCES " + GTblVal.TBL_DONOR + "(" + GTblVal.COL_ID + "), " +
-				"PRIMARY KEY(" + GTblVal.COL_NAME + ", " + GTblVal.COL_ID + ") )";
+				GTblVal.COL_DON_ID + " INTEGER REFERENCES " + GTblVal.TBL_DONOR + "(" + GTblVal.COL_DON_ID + "), " +
+				"PRIMARY KEY(" + GTblVal.COL_NAME + ", " + GTblVal.COL_DON_ID + ") )";
 		executeSQL(command);
 		
-		//ADD TBL DATA -- DEBUGGING
-//		command = 	"INSERT INTO " + GTblVal.TBL_DONOR + " " +
-//					"SELECT NULL AS '" + GTblVal.COL_ID + "', 'Kyle Peltier'" + " AS '" + GTblVal.COL_NAME + "', 'Grand Valley student' AS " + GTblVal.COL_BIO + " " +
-//					"UNION SELECT NULL, 'Matthew Williams', 'Grand Valley student' " +
-//					"UNION SELECT NULL, 'Samantha Williams', 'Grand Valley student'";
-//		executeSQL(command);
+		// /*  ADD TBL DATA -- DEBUGGING
+		command = 	"INSERT INTO " + GTblVal.TBL_DONOR + " " +
+					"SELECT NULL AS '" + GTblVal.COL_DON_ID + "', 'Kyle Peltier'" + " AS '" + GTblVal.COL_NAME + "', 'Grand Valley student' AS '" + GTblVal.COL_BIO + "', NULL AS '" + GTblVal.COL_IMG_ID + "' " +
+					"UNION SELECT NULL, 'Matthew Williams', 'Grand Valley student', NULL " +
+					"UNION SELECT NULL, 'Samantha Williams', 'Grand Valley student', NULL ";
+		executeSQL(command);
 		
+		command = 	"INSERT INTO " + GTblVal.TBL_IMAGE + " " +
+					"SELECT 0 AS '" + GTblVal.COL_IMG_ID + "', 'donorimg/Cook, Peter.jpg' AS " + GTblVal.COL_FILEPATH + ", NULL AS " + GTblVal.COL_NAME + " " +
+					"UNION SELECT 1, 'buildingimg/Kirkhoff.jpg', NULL";
+		executeSQL(command);
+		// -- DEBUGGING -- */
 	}
 	
 	/*
