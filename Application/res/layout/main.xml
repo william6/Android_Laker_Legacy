@@ -12,51 +12,34 @@
         android1:layout_weight="0.76"
         android1:src="@android:drawable/ic_menu_mapmode" />
 
-    <LinearLayout
-        android1:layout_width="wrap_content"
-        android1:layout_height="wrap_content"
-        android1:gravity="bottom"
-        android1:orientation="horizontal" >
+    <TabHost 
+        xmlns:android="http://schemas.android.com/apk/res/android"
+   		android:id="@android:id/tabhost" 
+   		android:layout_width="fill_parent"
+   		android:layout_height="fill_parent">
 
-        <Button
-            android1:id="@+id/home_tab"
-            android1:style="?android:attr/buttonBarStyle"
-            android1:layout_width="wrap_content"
-            android1:layout_height="wrap_content"
-            android1:text="Home" >
-        </Button>
+   	<LinearLayout
+   	    android:layout_width="fill_parent"
+   	    android:layout_height="fill_parent"
+   	    android:gravity="bottom"
+   	    android:orientation="vertical"
+   	    android:padding="5dp" >
 
-        <Button
-            android:id="@+id/Map_tab"
-            android:style="?android1:attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Map" >
-        </Button>
+   	    <FrameLayout 
+   	        android:id="@android:id/tabcontent"
+   	        android:layout_width="fill_parent"
+   	        android:layout_height="fill_parent"
+   	        android:padding="5dp">
 
-        <Button
-            android1:id="@+id/Directory_tab"
-            android1:style="?android:attr/buttonBarStyle"
-            android1:layout_width="wrap_content"
-            android1:layout_height="wrap_content"
-            android1:text="Directory" >
-        </Button>
+   	        <TabWidget
+   	            android:id="@android:id/tabs"
+   	            android:layout_width="89dp"
+   	            android:layout_height="48dp"
+   	            android:gravity="bottom|clip_horizontal" >
 
-        <Button
-            android1:id="@+id/NearMe_tab"
-            android1:style="?android:attr/buttonBarStyle"
-            android1:layout_width="match_parent"
-            android1:layout_height="wrap_content"
-            android1:text="Near Me" >
-        </Button>
+   	        </TabWidget>
 
-        <Button
-            android1:id="@+id/Donate_tab"
-            android1:style="?android:attr/buttonBarStyle"
-            android1:layout_width="wrap_content"
-            android1:layout_height="wrap_content"
-            android1:text="Donate" >
-        </Button>
-    </LinearLayout>
-
+   	    </FrameLayout>
+   	</LinearLayout>  
+</TabHost>
 </LinearLayout>
