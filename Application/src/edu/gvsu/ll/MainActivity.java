@@ -3,14 +3,9 @@ package edu.gvsu.ll;
 import java.io.File;
 
 
-import android.R;
 import android.app.Activity;
-import android.content.Intent;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.widget.TabHost;
-import android.widget.TabHost.TabSpec;
 
 public class MainActivity extends Activity {
 	
@@ -42,16 +37,5 @@ public class MainActivity extends Activity {
         	}
         	cursor.moveToNext();
         }
-        
-        //create tabs on main page
-        Resources resources = getResources();
-        TabHost tabHost = getTabHost();
-        	Intent intentAndroid = new Intent().setClass(this, MainActivity.class);
-        
-        	//Create first tab
-        TabSpec Tab1 = tabHost.newTabSpec("Android")
-        				.setIndicator("",resources.getDrawable(R.drawable.ic_lock_idle_low_battery)) //random icon
-        				.setContent(intentAndroid);
-        
     }
 }
