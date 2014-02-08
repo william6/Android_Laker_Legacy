@@ -1,11 +1,24 @@
 package edu.gvsu.ll;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.Context;
+import android.content.res.AssetManager;
+import android.content.res.XmlResourceParser;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.util.Xml;
 
 public class DatabaseManager
 {
@@ -27,6 +40,10 @@ public class DatabaseManager
 		
 		//check if the given database file exists. If database exists, load it
 		File fDatabase = new File(pathToDb + databaseName);
+		
+		//DEBUG -- TODO - remove db file for debugging
+		if( fDatabase.exists() ) fDatabase.delete();
+		
 		if( fDatabase.exists() ){
 			try{
 				mDatabase = SQLiteDatabase.openDatabase(pathToDb + databaseName, null, SQLiteDatabase.OPEN_READWRITE);
@@ -41,12 +58,34 @@ public class DatabaseManager
 			Log.d("Database " + databaseName + " doesn't exist. Creating it...");
 			File dbDir = new File(pathToDb);		//directory of database
 			dbDir.mkdirs();
+			dbDir.setReadable(true, false);
+			dbDir.setWritable(true, false);
+			fDatabase.setReadable(true, false);
+			fDatabase.setWritable(true, false);
 			if(dbDir.exists())
 				Log.d("Created database directory");
 			try{
 				mDatabase = SQLiteDatabase.openOrCreateDatabase(fDatabase, null);
 				createTables();
 				Log.d("Created database " + databaseName + " at " + pathToDb);
+				
+				// TODO -- DEBUG -- copy db file to external storage so we can get the file
+				try {
+					File fPublic = new File((DirectoryActivity.sInstance.getExternalFilesDir(null)).getAbsolutePath() + "/database.db");
+					fPublic.createNewFile();
+					
+					InputStream fin = new FileInputStream(fDatabase);
+					OutputStream fout = new FileOutputStream(fPublic);
+					byte buffer[] = new byte[100*1024];
+					fin.read(buffer);
+					fout.write(buffer);
+					
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+				catch ( IOException ioe){
+					
+				}
 			}
 			catch(SQLiteException e){
 				throw new RuntimeException("ERROR: couldn't create database on device.  " + e.getMessage());
@@ -87,16 +126,17 @@ public class DatabaseManager
 		executeSQL(command);
 		
 		// /*  ADD TBL DATA -- DEBUGGING
-		command = 	"INSERT INTO " + GTblVal.TBL_DONOR + " " +
-					"SELECT NULL AS '" + GTblVal.COL_DON_ID + "', 'Kyle Peltier'" + " AS '" + GTblVal.COL_NAME + "', 'Grand Valley student' AS '" + GTblVal.COL_BIO + "', NULL AS '" + GTblVal.COL_IMG_ID + "' " +
-					"UNION SELECT NULL, 'Matthew Williams', 'Grand Valley student', NULL " +
-					"UNION SELECT NULL, 'Samantha Williams', 'Grand Valley student', NULL ";
-		executeSQL(command);
-		
-		command = 	"INSERT INTO " + GTblVal.TBL_IMAGE + " " +
-					"SELECT 0 AS '" + GTblVal.COL_IMG_ID + "', 'donorimg/Cook, Peter.jpg' AS " + GTblVal.COL_FILEPATH + ", NULL AS " + GTblVal.COL_NAME + " " +
-					"UNION SELECT 1, 'buildingimg/Kirkhoff.jpg', NULL";
-		executeSQL(command);
+//		command = 	"INSERT INTO " + GTblVal.TBL_DONOR + " " +
+//					"SELECT NULL AS '" + GTblVal.COL_DON_ID + "', 'Kyle Peltier'" + " AS '" + GTblVal.COL_NAME + "', 'Grand Valley student' AS '" + GTblVal.COL_BIO + "', NULL AS '" + GTblVal.COL_IMG_ID + "' " +
+//					"UNION SELECT NULL, 'Matthew Williams', 'Grand Valley student', NULL " +
+//					"UNION SELECT NULL, 'Samantha Williams', 'Grand Valley student', NULL ";
+//		executeSQL(command);
+//		
+//		command = 	"INSERT INTO " + GTblVal.TBL_IMAGE + " " +
+//					"SELECT 0 AS '" + GTblVal.COL_IMG_ID + "', 'donorimg/Cook, Peter.jpg' AS " + GTblVal.COL_FILEPATH + ", NULL AS " + GTblVal.COL_NAME + " " +
+//					"UNION SELECT 1, 'buildingimg/Kirkhoff.jpg', NULL";
+//		executeSQL(command);
+		addDonors();
 		// -- DEBUGGING -- */
 	}
 	
@@ -127,5 +167,10 @@ public class DatabaseManager
 			return null;
 		}
 		
+	}
+	
+	private void addDonors(){
+		XMLProcessManager pm = new XMLProcessManager( this );
+		pm.addDonors();
 	}
 }

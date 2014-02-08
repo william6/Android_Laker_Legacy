@@ -5,7 +5,13 @@
 	android:versionName="1.0" >
 
 	<uses-sdk android:minSdkVersion="14" />
+	
+	<!-- TODO DELETE THESE PERMISSIONS, THEY ARE FOR DEBUGGING ONLY -->
 	<uses-permission android:name="android.permission.SET_DEBUG_APP"/>
+	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	
+	<!-- PUT NECESSARY PERMISSIONS HERE -->
 
 	<application
 		android:icon="@drawable/ic_launcher"
@@ -19,6 +25,11 @@
 
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
+		</activity>
+		
+		<activity
+			android:label="DirectoryActivity"
+			android:name=".DirectoryActivity" >
 		</activity>
 	</application>
 
