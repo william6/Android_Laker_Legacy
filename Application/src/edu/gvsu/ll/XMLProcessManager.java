@@ -165,6 +165,7 @@ public class XMLProcessManager{
 				else if( nEvent == XmlPullParser.END_TAG){
 					if(mParser.getName().equalsIgnoreCase(strEntity)){
 						nthElement++;
+						valid = false;
 						if(command.toString().trim().length() >= MAX_SQL-TOLERANCE){
 							mDBM.executeSQL(command.toString());
 							nthElement = 0;

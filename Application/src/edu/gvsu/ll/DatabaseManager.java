@@ -7,22 +7,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.Context;
-import android.content.res.AssetManager;
-import android.content.res.XmlResourceParser;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.util.Xml;
 
 public class DatabaseManager
 {
-	private SQLiteDatabase mDatabase;
+	private SQLiteDatabase 	mDatabase;
+	private File 			mfDatabase;
 	
 	/*
 	 * @param context : context of the application
@@ -39,12 +32,12 @@ public class DatabaseManager
 			databaseName += ".db";
 		
 		//check if the given database file exists. If database exists, load it
-		File fDatabase = new File(pathToDb + databaseName);
+		mfDatabase = new File(pathToDb + databaseName);
 		
 		//DEBUG -- TODO - remove db file for debugging
-		if( fDatabase.exists() ) fDatabase.delete();
+		if( mfDatabase.exists() ) mfDatabase.delete();
 		
-		if( fDatabase.exists() ){
+		if( mfDatabase.exists() ){
 			try{
 				mDatabase = SQLiteDatabase.openDatabase(pathToDb + databaseName, null, SQLiteDatabase.OPEN_READWRITE);
 				Log.d("Database " + databaseName + " loaded from " + pathToDb);
@@ -60,31 +53,13 @@ public class DatabaseManager
 			dbDir.mkdirs();
 			dbDir.setReadable(true, false);
 			dbDir.setWritable(true, false);
-			fDatabase.setReadable(true, false);
-			fDatabase.setWritable(true, false);
+			mfDatabase.setReadable(true, false);
+			mfDatabase.setWritable(true, false);
 			if(dbDir.exists())
 				Log.d("Created database directory");
 			try{
-				mDatabase = SQLiteDatabase.openOrCreateDatabase(fDatabase, null);
+				mDatabase = SQLiteDatabase.openOrCreateDatabase(mfDatabase, null);
 				Log.d("Created database " + databaseName + " at " + pathToDb);
-				
-				// TODO -- DEBUG -- copy db file to external storage so we can get the file
-				try {
-					File fPublic = new File((DirectoryActivity.sInstance.getExternalFilesDir(null)).getAbsolutePath() + "/database.db");
-					fPublic.createNewFile();
-					
-					InputStream fin = new FileInputStream(fDatabase);
-					OutputStream fout = new FileOutputStream(fPublic);
-					byte buffer[] = new byte[100*1024];
-					fin.read(buffer);
-					fout.write(buffer);
-					
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
-				catch ( IOException ioe){
-					
-				}
 			}
 			catch(SQLiteException e){
 				throw new RuntimeException("ERROR: couldn't create database on device.  " + e.getMessage());
@@ -163,5 +138,25 @@ public class DatabaseManager
 			return null;
 		}
 		
+	}
+	
+	public void saveDatabase(){
+		// TODO -- DEBUG -- copy db file to external storage so we can get the file. This will be unnecessary when porting. delete this function.
+		try {
+			File fPublic = new File((DirectoryActivity.sInstance.getExternalFilesDir(null)).getAbsolutePath() + "/database.db");
+			fPublic.createNewFile();
+			
+			InputStream fin = new FileInputStream(mfDatabase);
+			OutputStream fout = new FileOutputStream(fPublic);
+			byte buffer[] = new byte[100*1024];
+			fin.read(buffer);
+			fout.write(buffer);
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		catch ( IOException ioe){
+			
+		}
 	}
 }
