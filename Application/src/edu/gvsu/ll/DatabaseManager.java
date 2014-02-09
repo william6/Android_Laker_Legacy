@@ -66,7 +66,6 @@ public class DatabaseManager
 				Log.d("Created database directory");
 			try{
 				mDatabase = SQLiteDatabase.openOrCreateDatabase(fDatabase, null);
-				createTables();
 				Log.d("Created database " + databaseName + " at " + pathToDb);
 				
 				// TODO -- DEBUG -- copy db file to external storage so we can get the file
@@ -93,51 +92,48 @@ public class DatabaseManager
 		}
 	}
 	
-	private void createTables(){
+	public boolean createTables(){
+		
+		boolean status;
+		
 		//create MONUMENT table
-		String command = "CREATE TABLE " + GTblVal.TBL_MONUMENT + " ( " +
+		String command = "CREATE TABLE IF NOT EXISTS " + GTblVal.TBL_MONUMENT + " ( " +
 				GTblVal.COL_NAME + " TEXT (128) PRIMARY KEY, " +
-				GTblVal.COL_ADDR + " TEXT (256) NOT NULL, " +
+//				GTblVal.COL_ADDR + " TEXT (256) NOT NULL, " +
 				GTblVal.COL_CAMPUS + " TEXT (32) NOT NULL, " +
-				GTblVal.COL_EST + " DATE, " +
+				GTblVal.COL_EST + " INTEGER, " +
 				GTblVal.COL_GPS + " TEXT (64) )";
-		executeSQL(command);
+		status = executeSQL(command);
+		
+		if(!status) return status;
 		
 		//create IMAGE table
-		command = "CREATE TABLE " + GTblVal.TBL_IMAGE + " ( " +
+		command = "CREATE TABLE IF NOT EXISTS " + GTblVal.TBL_IMAGE + " ( " +
 				GTblVal.COL_IMG_ID + " INTEGER PRIMARY KEY, " +
-				GTblVal.COL_FILEPATH + " TEXT (256) NOT NULL, " +
+				GTblVal.COL_FILENAME + " TEXT (256) NOT NULL, " +
 				GTblVal.COL_NAME + " TEXT(128) REFERENCES " + GTblVal.TBL_MONUMENT + "(" + GTblVal.COL_NAME + ") )";
-		executeSQL(command);
+		status = executeSQL(command);
+		
+		if(!status) return status;
 		
 		//create DONOR table
-		command = "CREATE TABLE " + GTblVal.TBL_DONOR + " ( " +
+		command = "CREATE TABLE IF NOT EXISTS " + GTblVal.TBL_DONOR + " ( " +
 				GTblVal.COL_DON_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
 				GTblVal.COL_NAME + " TEXT (128) NOT NULL, " +
 				GTblVal.COL_BIO + " TEXT (" + GTblVal.N_BIO_MAX + ") NOT NULL, " +
 				GTblVal.COL_IMG_ID + " INTEGER REFERENCES " + GTblVal.TBL_IMAGE + "(" + GTblVal.COL_IMG_ID + ") )";
-		executeSQL(command);
+		status = executeSQL(command);
+		
+		if(!status) return status;
 		
 		//create MONUMENT_DONOR table
-		command = "CREATE TABLE " + GTblVal.TBL_MON_DON + " ( " +
+		command = "CREATE TABLE IF NOT EXISTS " + GTblVal.TBL_MON_DON + " ( " +
 				GTblVal.COL_NAME + " TEXT(128) REFERENCES " + GTblVal.TBL_MONUMENT + "(" + GTblVal.COL_NAME + "), " +
 				GTblVal.COL_DON_ID + " INTEGER REFERENCES " + GTblVal.TBL_DONOR + "(" + GTblVal.COL_DON_ID + "), " +
 				"PRIMARY KEY(" + GTblVal.COL_NAME + ", " + GTblVal.COL_DON_ID + ") )";
-		executeSQL(command);
+		status = executeSQL(command);
 		
-		// /*  ADD TBL DATA -- DEBUGGING
-//		command = 	"INSERT INTO " + GTblVal.TBL_DONOR + " " +
-//					"SELECT NULL AS '" + GTblVal.COL_DON_ID + "', 'Kyle Peltier'" + " AS '" + GTblVal.COL_NAME + "', 'Grand Valley student' AS '" + GTblVal.COL_BIO + "', NULL AS '" + GTblVal.COL_IMG_ID + "' " +
-//					"UNION SELECT NULL, 'Matthew Williams', 'Grand Valley student', NULL " +
-//					"UNION SELECT NULL, 'Samantha Williams', 'Grand Valley student', NULL ";
-//		executeSQL(command);
-//		
-//		command = 	"INSERT INTO " + GTblVal.TBL_IMAGE + " " +
-//					"SELECT 0 AS '" + GTblVal.COL_IMG_ID + "', 'donorimg/Cook, Peter.jpg' AS " + GTblVal.COL_FILEPATH + ", NULL AS " + GTblVal.COL_NAME + " " +
-//					"UNION SELECT 1, 'buildingimg/Kirkhoff.jpg', NULL";
-//		executeSQL(command);
-		addDonors();
-		// -- DEBUGGING -- */
+		return status;
 	}
 	
 	/*
@@ -167,10 +163,5 @@ public class DatabaseManager
 			return null;
 		}
 		
-	}
-	
-	private void addDonors(){
-		XMLProcessManager pm = new XMLProcessManager( this );
-		pm.addDonors();
 	}
 }

@@ -22,9 +22,14 @@ public class DirectoryActivity extends Activity
         File fInternalDir = getFilesDir();	//app data directory
         String strDbName = "Laker_Legacy_DB";
         DatabaseManager dbManager = new DatabaseManager(getApplicationContext(), strDbName, fInternalDir.getAbsolutePath() + "/database/", 1);   
+        dbManager.createTables();
+		XMLProcessManager xmlManager = new XMLProcessManager(dbManager);
+		xmlManager.addMonuments();
+//    	xmlManager.addImages();
+		xmlManager.addDonors();
         
         //query database to make sure it's working
-        Cursor cursor = dbManager.query("SELECT * FROM " + GTblVal.TBL_DONOR);
+        Cursor cursor = dbManager.query("SELECT * FROM " + GTblVal.TBL_MONUMENT);
         cursor.moveToFirst();
         for(int i=0; i<cursor.getCount(); i++){
         	for(int j=0; j<cursor.getColumnCount(); j++){

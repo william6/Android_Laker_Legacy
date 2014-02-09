@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<monument>
+	<name><![CDATA[Beckering Carillon]]></name>
+	<campus><![CDATA[Pew, Robert C. - Grand Rapids]]></campus>
+	<year_est><![CDATA[2002]]></year_est>
+	<gps><![CDATA[42.96378,-85.680771]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[Cook Carillon]]></name>
+	<campus><![CDATA[Allendale]]></campus>
+	<year_est><![CDATA[1994]]></year_est>
+	<gps><![CDATA[42.963428,-85.888598]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[Kirkpatrick Living Center]]></name>
+	<campus><![CDATA[Allendale]]></campus>
+	<year_est><![CDATA[1998]]></year_est>
+	<gps><![CDATA[42.968465,-85.883062]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[Loutit Lecture Hall]]></name>
+	<campus><![CDATA[Allendale]]></campus>
+	<year_est><![CDATA[1966]]></year_est>
+	<gps><![CDATA[42.965091,-85.888166]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[Lubbers Stadium]]></name>
+	<campus><![CDATA[Allendale]]></campus>
+	<year_est><![CDATA[1973]]></year_est>
+	<gps><![CDATA[42.968804,-85.89472]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[Mary Idema Pew Library]]></name>
+	<campus><![CDATA[Allendale]]></campus>
+	<year_est><![CDATA[2013]]></year_est>
+	<gps><![CDATA[42.962939,-85.889679]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[Meijer Broadcasting Center]]></name>
+	<campus><![CDATA[Pew, Robert C. - Grand Rapids]]></campus>
+	<year_est><![CDATA[1972]]></year_est>
+	<gps><![CDATA[42.96364,-85.677393]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[Seidman Center]]></name>
+	<campus><![CDATA[Pew, Robert C. - Grand Rapids]]></campus>
+	<year_est><![CDATA[2013]]></year_est>
+	<gps><![CDATA[42.961681,-85.679302]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[Steelcase Library]]></name>
+	<campus><![CDATA[Pew, Robert C. - Grand Rapids]]></campus>
+	<year_est><![CDATA[2002]]></year_est>
+	<gps><![CDATA[42.963913,-85.680727]]></gps>
+</monument>
+<monument>
+	<name><![CDATA[VanSteeland LC]]></name>
+	<campus><![CDATA[Allendale]]></campus>
+	<year_est><![CDATA[2001]]></year_est>
+	<gps><![CDATA[42.958515,-85.887096]]></gps>
+</monument>

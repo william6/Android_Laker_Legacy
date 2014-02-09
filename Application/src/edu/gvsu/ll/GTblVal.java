@@ -15,7 +15,7 @@ public class GTblVal
 	public static final String COL_EST		 = "est";		//date established
 	public static final String COL_GPS		 = "gps";		//GPS coordinates of building
 	public static final String COL_BIO		 = "bio";		//donor biography
-	public static final String COL_FILEPATH	 = "path";		//filepath to image file on device
+	public static final String COL_FILENAME	 = "path";		//filename of image on device
 	public static final String COL_DON_ID	 = "donid";		//donor id
 	public static final String COL_IMG_ID	 = "imgid";		//image id
 	
