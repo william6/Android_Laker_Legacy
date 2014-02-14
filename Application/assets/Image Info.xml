@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<image>
+	<imageid>0</imageid>
+	<filename><![CDATA[beckering_carillon_0]]></filename>
+	<name><![CDATA[Beckering Carillon]]></name>
+</image>
+<image>
+	<imageid>1</imageid>
+	<filename><![CDATA[cook_carillon_0]]></filename>
+	<name><![CDATA[Cook Carillon]]></name>
+</image>
+<image>
+	<imageid>2</imageid>
+	<filename><![CDATA[cook_carillon_1]]></filename>
+	<name><![CDATA[Cook Carillon]]></name>
+</image>
+<image>
+	<imageid>3</imageid>
+	<filename><![CDATA[kirkpatrick_living_center_0]]></filename>
+	<name><![CDATA[Kirkpatrick Living Center]]></name>
+</image>
+<image>
+	<imageid>4</imageid>
+	<filename><![CDATA[loutit hall_0]]></filename>
+	<name><![CDATA[Loutit Lecture Hall]]></name>
+</image>
+<image>
+	<imageid>5</imageid>
+	<filename><![CDATA[lubbers_stadium_0]]></filename>
+	<name><![CDATA[Lubbers Stadium]]></name>
+</image><image>
+	<imageid>6</imageid>
+	<filename><![CDATA[mary_idema_pew_library_0]]></filename>
+	<name><![CDATA[Mary Idema Pew Library]]></name>
+</image><image>
+	<imageid>7</imageid>
+	<filename><![CDATA[mary_idema_pew_library_1]]></filename>
+	<name><![CDATA[Mary Idema Pew Library]]></name>
+</image>
+<image>
+	<imageid>8</imageid>
+	<filename><![CDATA[meijer_broadcasting_center_0]]></filename>
+	<name><![CDATA[Meijer Broadcasting Center]]></name>
+</image>
+<image>
+	<imageid>9</imageid>
+	<filename><![CDATA[seidman_center_0]]></filename>
+	<name><![CDATA[Seidman Center]]></name>
+</image>
+<image>
+	<imageid>10</imageid>
+	<filename><![CDATA[steelcase_library_0]]></filename>
+	<name><![CDATA[Steelcase Library]]></name>
+</image>
+<image>
+	<imageid>11</imageid>
+	<filename><![CDATA[vansteeland_living_center_0]]></filename>
+	<name><![CDATA[VanSteeland LC]]></name>
+</image>

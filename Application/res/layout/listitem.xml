@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:id="@+id/DIR_listItem" >
+	
+	<ImageView
+		android:id="@+id/LI_imgIcon"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_margin="5dp"
+		android:layout_alignParentLeft="true" />
+	
+	<TextView
+		android:id="@+id/LI_txtTitle"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text=""
+		android:layout_toRightOf="@id/LI_imgIcon"
+		android:textStyle="bold" />
+	
+	<TextView 
+		android:id="@+id/LI_txtSubtitle"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:text=""
+		android:layout_below="@id/LI_txtTitle" />
+
+</RelativeLayout>

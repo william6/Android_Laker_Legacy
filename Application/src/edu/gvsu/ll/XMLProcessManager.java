@@ -38,6 +38,7 @@ public class XMLProcessManager{
 		TAGSET.add(TAG_YEAR_EST);
 		TAGSET.add(TAG_GPS);
 		TAGSET.add(TAG_IMAGE);
+		TAGSET.add(TAG_FILENAME);
 	}
 	
 	private XmlPullParser mParser;
@@ -124,6 +125,7 @@ public class XMLProcessManager{
 					if(tag.equalsIgnoreCase(TAG_NAME)){
 						if(nthElement == 0)
 							command.append(" AS " + GTblVal.COL_NAME);
+						if(!strTable.equalsIgnoreCase(GTblVal.TBL_IMAGE))
 						command.append(", ");
 					}
 					
@@ -137,7 +139,9 @@ public class XMLProcessManager{
 					//IMAGE ID
 					else if (tag.equalsIgnoreCase(TAG_IMGID)){
 						if(nthElement == 0)
-							command.append(" AS " + GTblVal.COL_IMG_ID);
+							command.append(" AS " + GTblVal.COL_IMG_ID );
+						if(strTable.equalsIgnoreCase(GTblVal.TBL_IMAGE))
+							command.append(", ");
 					}
 					
 					//CAMPUS
@@ -158,6 +162,13 @@ public class XMLProcessManager{
 					else if (tag.equalsIgnoreCase(TAG_GPS)){
 						if(nthElement == 0)
 							command.append(" AS " + GTblVal.COL_GPS);
+					}
+					
+					//FILENAME
+					else if( tag.equalsIgnoreCase(TAG_FILENAME) ){
+						if(nthElement == 0)
+							command.append(" AS " + GTblVal.COL_FILENAME );
+						command.append(", ");
 					}
 				}
 				

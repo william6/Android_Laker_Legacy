@@ -7,13 +7,13 @@ public class Log
 	
 	
 	public static void d(String debugMessage){
-		android.util.Log.d(DEBUG_TAG, " ");
-		android.util.Log.d(DEBUG_TAG, "===================================================");
-		android.util.Log.d(DEBUG_TAG, " ");
+//		android.util.Log.d(DEBUG_TAG, " ");
+//		android.util.Log.d(DEBUG_TAG, "===================================================");
+//		android.util.Log.d(DEBUG_TAG, " ");
 		android.util.Log.d(DEBUG_TAG, debugMessage);
-		android.util.Log.d(DEBUG_TAG, " ");
-		android.util.Log.d(DEBUG_TAG, "===================================================");
-		android.util.Log.d(DEBUG_TAG, " ");
+//		android.util.Log.d(DEBUG_TAG, " ");
+//		android.util.Log.d(DEBUG_TAG, "===================================================");
+//		android.util.Log.d(DEBUG_TAG, " ");
 	}
 	
 	public static void e(String errorMessage){
