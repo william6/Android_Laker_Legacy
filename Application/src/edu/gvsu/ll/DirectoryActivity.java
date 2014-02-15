@@ -41,6 +41,7 @@ public class DirectoryActivity extends Activity
 		xmlManager.addMonuments();
     	xmlManager.addImages();
 		xmlManager.addDonors();
+		xmlManager.addMonDonRelationship();
 		dbManager.saveDatabase();	//TODO -- for debugging. delete on port
         
 		//set up the list view
@@ -59,28 +60,6 @@ public class DirectoryActivity extends Activity
         while(loadData.isAlive()){   }
         
         vList.setAdapter(mAdapter);	//the data has been loaded. Show the listview
-		
-        
-        //query database to make sure it's working
-/*        Cursor cursor = dbManager.query("SELECT * FROM " + GTblVal.TBL_MONUMENT);
-        cursor.moveToFirst();
-        for(int i=0; i<cursor.getCount(); i++){
-        	for(int j=0; j<cursor.getColumnCount(); j++){
-        		Log.d(cursor.getColumnName(j).toUpperCase() + ": " + cursor.getString(j));
-        	}
-        	Log.d(" ");
-        	cursor.moveToNext();
-        }
-		
-        cursor = dbManager.query("SELECT * FROM " + GTblVal.TBL_IMAGE);
-        cursor.moveToFirst();
-        for(int i=0; i<cursor.getCount(); i++){
-        	for(int j=0; j<cursor.getColumnCount(); j++){
-        		Log.d(cursor.getColumnName(j).toUpperCase() + ": " + cursor.getString(j));
-        	}
-        	cursor.moveToNext();
-        }
-*/
 	}
 }
 
@@ -203,14 +182,13 @@ class DBListAdapter implements ListAdapter
 		//go through the list of monuments. Find its donors and images
 		for(int i=0; i<monumentCursor.getCount(); i++){
 			String strMonumentName = monumentCursor.getString(0);
-			String strDonors = "donor names go here";
+			String strDonors = "";
 			
 			//find all images associated with this monument. Pick one to display
-			String strQuery = 
+			Cursor imgCursor = dbm.query(
 						"SELECT " + GTblVal.COL_FILENAME + " " +
 						"FROM " + GTblVal.TBL_IMAGE + " " +
-						"WHERE " + GTblVal.COL_NAME + " = '" + strMonumentName + "'" ;
-			Cursor imgCursor = dbm.query( strQuery );
+						"WHERE " + GTblVal.COL_NAME + " = '" + strMonumentName + "'" );
 			imgCursor.moveToFirst();
 			int imgIndex = 0;
 			if( imgCursor.getCount() > 1 ){
@@ -220,11 +198,17 @@ class DBListAdapter implements ListAdapter
 			String filename = imgCursor.getString(0);
 			
 			//find all major contributor(s) to this monument. Display all [that fit]
-			//Cursor donCursor = dbm.query(
-			//			"SELECT D." + GTblVal.COL_NAME + " " +
-			//			"FROM " + GTblVal.TBL_DONOR + " D, " + GTblVal.TBL_MONUMENT + " M " +
-			//			"WHERE D."
-			
+			Cursor donCursor = dbm.query(
+						"SELECT D." + GTblVal.COL_NAME + " " +
+						"FROM " + GTblVal.TBL_MON_DON + " M, " + GTblVal.TBL_DONOR + " D " +
+						"WHERE M." + GTblVal.COL_NAME + " = '" + strMonumentName + "' AND " +
+							"M." + GTblVal.COL_DON_ID + "=D." + GTblVal.COL_DON_ID );
+			donCursor.moveToFirst();
+			for(int j = 0; j < donCursor.getCount(); j++){
+				if( j != 0 )
+					strDonors += "\n";
+				strDonors += donCursor.getString(0);
+			}
 			
 			listItems[i] = new ListItemView(context, strMonumentName, strDonors, filename, i);
 			monumentCursor.moveToNext();

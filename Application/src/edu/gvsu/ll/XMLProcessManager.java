@@ -14,25 +14,31 @@ public class XMLProcessManager{
 	public static final String DONORS_XML	 = "Donor Info.xml";
 	public static final String MONUMENTS_XML = "Monument Info.xml";
 	public static final String IMAGES_XML	 = "Image Info.xml";
+	public static final String MONDON_XML	 = "MonDon Info.xml";
 	
 	//Tags
-	public static final String TAG_NAME 	= "name";
 	public static final String TAG_DONOR 	= "donor";
+	public static final String TAG_MONUMENT	= "monument";
+	public static final String TAG_IMAGE	= "image";
+	public static final String TAG_MONDON	= "mon_don";
+	
+	public static final String TAG_NAME 	= "name";
 	public static final String TAG_BIO 		= "bio";
 	public static final String TAG_IMGID 	= "imageid";
-	public static final String TAG_MONUMENT	= "monument";
+	public static final String TAG_DONID	= "donorid";
 	public static final String TAG_CAMPUS	= "campus";
 	public static final String TAG_YEAR_EST	= "year_est";
 	public static final String TAG_GPS		= "gps";
-	public static final String TAG_IMAGE	= "image";
 	public static final String TAG_FILENAME = "filename";
 	
 	public static final HashSet<String> TAGSET = new HashSet<String>();
 	static{
 		TAGSET.add(TAG_NAME);
 		TAGSET.add(TAG_DONOR);
+		TAGSET.add(TAG_MONDON);
 		TAGSET.add(TAG_BIO);
 		TAGSET.add(TAG_IMGID);
+		TAGSET.add(TAG_DONID);
 		TAGSET.add(TAG_MONUMENT);
 		TAGSET.add(TAG_CAMPUS);
 		TAGSET.add(TAG_YEAR_EST);
@@ -63,6 +69,10 @@ public class XMLProcessManager{
 	public void addImages(){
 		parseDocument( IMAGES_XML, GTblVal.TBL_IMAGE, TAG_IMAGE );
 	}
+	
+	public void addMonDonRelationship(){
+		parseDocument( MONDON_XML, GTblVal.TBL_MON_DON, TAG_MONDON );
+	}
 		
 	
 	private void parseDocument(String strFile, String strTable, String strEntity){
@@ -85,18 +95,10 @@ public class XMLProcessManager{
 					tag = mParser.getName();
 					
 					if(tag.equalsIgnoreCase(strEntity)){
-						if(nthElement == 0){
-							if(strEntity.equalsIgnoreCase(TAG_DONOR))
-								command.append("SELECT NULL AS " + GTblVal.COL_DON_ID + ", ");
-							else
-								command.append("SELECT ");
-						}
-						else{
-							if(strEntity.equalsIgnoreCase(TAG_DONOR))
-								command.append(" UNION SELECT NULL, ");
-							else
-								command.append(" UNION SELECT ");
-						}
+						if(nthElement == 0)
+							command.append("SELECT ");
+						else
+							command.append(" UNION SELECT ");
 						
 						nEvent = mParser.next();	//got entity, skip to data
 						continue;
@@ -169,6 +171,14 @@ public class XMLProcessManager{
 						if(nthElement == 0)
 							command.append(" AS " + GTblVal.COL_FILENAME );
 						command.append(", ");
+					}
+					
+					//DONOR ID
+					else if( tag.equalsIgnoreCase(TAG_DONID)){
+						if(nthElement == 0)
+							command.append(" AS " + GTblVal.COL_DON_ID );
+						if( strTable.equalsIgnoreCase(GTblVal.TBL_DONOR ) )
+							command.append(", ");
 					}
 				}
 				
