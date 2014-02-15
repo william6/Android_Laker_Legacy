@@ -1,17 +1,15 @@
 package edu.gvsu.ll;
 
 import java.io.File;
+import java.util.Random;
 
 import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DataSetObserver;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,10 +49,9 @@ public class DirectoryActivity extends Activity
         
         //start the loader thread
         //monument name, donor name(s), filepath to image(s)
-        String query = 	"SELECT M." + GTblVal.COL_NAME + ", I." + GTblVal.COL_FILENAME + " " +			//TODO -- get custom query (saved setting/last run)
-						"FROM " + GTblVal.TBL_MONUMENT + " M, " + GTblVal.TBL_IMAGE + " I " +
-						"WHERE M." + GTblVal.COL_NAME + "=I." + GTblVal.COL_NAME + " " +
-						"ORDER BY M." + GTblVal.COL_NAME + " ASC";
+        String query = 	"SELECT " + GTblVal.COL_NAME + " " + 			//TODO -- get custom query (saved setting/last run)
+						"FROM " + GTblVal.TBL_MONUMENT + " " + 
+        				"ORDER BY " + GTblVal.COL_NAME + " ASC";
         Thread loadData = new Thread(new DBLoader(dbManager, mAdapter, query));
         loadData.start();
         
@@ -101,7 +98,7 @@ class DBLoader implements Runnable{
 	
 	public void run() {
 		Cursor cursor = mDBM.query( mstrQuery );
-		mAdapter.loadDataFromCursor(cursor);
+		mAdapter.loadDataFromCursor(mDBM, cursor);
 	}
 }
 
@@ -118,16 +115,67 @@ class ListItemView extends RelativeLayout
 		ImageView icon = (ImageView)this.findViewById(R.id.LI_imgIcon);
 		TextView title = (TextView)this.findViewById(R.id.LI_txtTitle);
 		TextView subtitle = (TextView)this.findViewById(R.id.LI_txtSubtitle);
-		
-		//int imgID = ((android.app.Activity)context).getResources().getIdentifier(strFilename, "drawable", DirectoryActivity.PACKAGE);
+
+		int imgID = ((android.app.Activity)context).getResources().getIdentifier(strFilename, "drawable", DirectoryActivity.PACKAGE);
 		//icon.setImageResource(imgID);
+		BitmapFactory.Options imgOptions = new BitmapFactory.Options();
+		imgOptions.inJustDecodeBounds = true;
+		BitmapFactory.decodeResource( getResources(), imgID, imgOptions );
+		imgOptions.inSampleSize = calcIconSize( imgOptions, 100, 100 );
+		imgOptions.inJustDecodeBounds = false;
+		icon.setImageBitmap( BitmapFactory.decodeResource( getResources(), imgID, imgOptions ) );
 		title.setText( strTitle );
 		subtitle.setText( strSubtitle );
-		
+
 		if(index % 2 == 0)
-			this.setBackgroundColor(Color.CYAN);
+			this.setBackgroundColor( Color.argb(255, 245, 228, 156 ) );
 		else
-			this.setBackgroundColor(Color.MAGENTA);
+			this.setBackgroundColor( Color.argb( 255, 250, 240, 201 ));
+	}
+
+	private int calcIconSize( BitmapFactory.Options options, int reqWidth, int reqHeight) {
+		// Raw height and width of image
+		final int height = options.outHeight;
+		final int width = options.outWidth;
+		int inSampleSize = 1;
+
+		if (height > reqHeight || width > reqWidth) {
+
+			final int halfHeight = height / 2;
+			final int halfWidth = width / 2;
+
+			// Calculate the largest inSampleSize value that is a power of 2 and keeps both
+			// height and width larger than the requested height and width.
+			while ((halfHeight / inSampleSize) > reqHeight
+					&& (halfWidth / inSampleSize) > reqWidth) {
+				inSampleSize *= 2;
+			}
+		}
+
+		return inSampleSize;
+	}
+
+	public static int calculateInSampleSize(
+			BitmapFactory.Options options, int reqWidth, int reqHeight) {
+		// Raw height and width of image
+		final int height = options.outHeight;
+		final int width = options.outWidth;
+		int inSampleSize = 1;
+
+		if (height > reqHeight || width > reqWidth) {
+
+			final int halfHeight = height / 2;
+			final int halfWidth = width / 2;
+
+			// Calculate the largest inSampleSize value that is a power of 2 and keeps both
+			// height and width larger than the requested height and width.
+			while ((halfHeight / inSampleSize) > reqHeight
+					&& (halfWidth / inSampleSize) > reqWidth) {
+				inSampleSize *= 2;
+			}
+		}
+
+		return inSampleSize;
 	}
 }
 
@@ -148,16 +196,38 @@ class DBListAdapter implements ListAdapter
 	}
 	
 	//given a cursor from a query, add the item to the list
-	public void loadDataFromCursor(Cursor cursor){
-		cursor.moveToFirst();
-		listItems = new ListItemView[cursor.getCount()];
+	public void loadDataFromCursor(DatabaseManager dbm, Cursor monumentCursor){
+		monumentCursor.moveToFirst();
+		listItems = new ListItemView[monumentCursor.getCount()];
 		
-		for(int i=0; i<cursor.getCount(); i++){
-			String strName = cursor.getString(0);
-			String filepath = cursor.getString(1);
-			String subtitle = "donor names go here";
-			listItems[i] = new ListItemView(context, strName, subtitle, filepath, i);
-			cursor.moveToNext();
+		//go through the list of monuments. Find its donors and images
+		for(int i=0; i<monumentCursor.getCount(); i++){
+			String strMonumentName = monumentCursor.getString(0);
+			String strDonors = "donor names go here";
+			
+			//find all images associated with this monument. Pick one to display
+			String strQuery = 
+						"SELECT " + GTblVal.COL_FILENAME + " " +
+						"FROM " + GTblVal.TBL_IMAGE + " " +
+						"WHERE " + GTblVal.COL_NAME + " = '" + strMonumentName + "'" ;
+			Cursor imgCursor = dbm.query( strQuery );
+			imgCursor.moveToFirst();
+			int imgIndex = 0;
+			if( imgCursor.getCount() > 1 ){
+				imgIndex = new Random().nextInt(imgCursor.getCount());
+			}
+			imgCursor.move(imgIndex);
+			String filename = imgCursor.getString(0);
+			
+			//find all major contributor(s) to this monument. Display all [that fit]
+			//Cursor donCursor = dbm.query(
+			//			"SELECT D." + GTblVal.COL_NAME + " " +
+			//			"FROM " + GTblVal.TBL_DONOR + " D, " + GTblVal.TBL_MONUMENT + " M " +
+			//			"WHERE D."
+			
+			
+			listItems[i] = new ListItemView(context, strMonumentName, strDonors, filename, i);
+			monumentCursor.moveToNext();
 		}
 	}
 	
