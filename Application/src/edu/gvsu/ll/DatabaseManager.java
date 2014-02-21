@@ -23,24 +23,18 @@ public class DatabaseManager
 	 * @param pathToDb : absolute filepath to the directory containing the database
 	 * @param version : database version number
 	 */
-	public DatabaseManager(Context context, String databaseName, String pathToDb, int version){
-		
-		//modify input values
-		if(!pathToDb.endsWith("/"))
-			pathToDb += "/";
-		if(!databaseName.endsWith(".db"));
-			databaseName += ".db";
+	public DatabaseManager(Context context, File database, int version){
 		
 		//check if the given database file exists. If database exists, load it
-		mfDatabase = new File(pathToDb + databaseName);
+		mfDatabase = database; //new File(pathToDb + databaseName);
 		
 		//DEBUG -- TODO - remove db file for debugging
-		if( mfDatabase.exists() ) mfDatabase.delete();
+		//if( mfDatabase.exists() ) mfDatabase.delete();
 		
 		if( mfDatabase.exists() ){
 			try{
-				mDatabase = SQLiteDatabase.openDatabase(pathToDb + databaseName, null, SQLiteDatabase.OPEN_READWRITE);
-				Log.d("Database " + databaseName + " loaded from " + pathToDb);
+				mDatabase = SQLiteDatabase.openDatabase(mfDatabase.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE);
+				Log.d("Database " + mfDatabase.getAbsolutePath() + " loaded");
 			}
 			catch( SQLiteException sqle){
 				throw new RuntimeException(sqle.getMessage());
@@ -48,22 +42,23 @@ public class DatabaseManager
 		}
 		//if database doesn't exist, create it
 		else{
-			Log.d("Database " + databaseName + " doesn't exist. Creating it...");
-			File dbDir = new File(pathToDb);		//directory of database
-			dbDir.mkdirs();
-			dbDir.setReadable(true, false);
-			dbDir.setWritable(true, false);
-			mfDatabase.setReadable(true, false);
-			mfDatabase.setWritable(true, false);
-			if(dbDir.exists())
-				Log.d("Created database directory");
-			try{
-				mDatabase = SQLiteDatabase.openOrCreateDatabase(mfDatabase, null);
-				Log.d("Created database " + databaseName + " at " + pathToDb);
-			}
-			catch(SQLiteException e){
-				throw new RuntimeException("ERROR: couldn't create database on device.  " + e.getMessage());
-			}
+			throw new RuntimeException("ERROR: No database file exists.");
+//			Log.d("Database " + databaseName + " doesn't exist. Creating it...");
+//			File dbDir = new File(pathToDb);		//directory of database
+//			dbDir.mkdirs();
+//			dbDir.setReadable(true, false);
+//			dbDir.setWritable(true, false);
+//			mfDatabase.setReadable(true, false);
+//			mfDatabase.setWritable(true, false);
+//			if(dbDir.exists())
+//				Log.d("Created database directory");
+//			try{
+//				mDatabase = SQLiteDatabase.openOrCreateDatabase(mfDatabase, null);
+//				Log.d("Created database " + databaseName + " at " + pathToDb);
+//			}
+//			catch(SQLiteException e){
+//				throw new RuntimeException("ERROR: couldn't create database on device.  " + e.getMessage());
+//			}
 		}
 	}
 	
@@ -158,5 +153,9 @@ public class DatabaseManager
 		catch ( IOException ioe){
 			
 		}
+	}
+	
+	public String getDatabaseName(){
+		return mfDatabase.getName();
 	}
 }
