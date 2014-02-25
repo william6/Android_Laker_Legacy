@@ -1,8 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ListView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
-	android:id="@+id/DIR_ListRoot" >
+	android:id="@+id/DIR_Root" >
 	
-
-</ListView>
+	<LinearLayout 
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/DIR_lOptions"
+		android:orientation="horizontal"
+		android:layout_alignParentTop="true" >
+		
+		<EditText 
+			android:layout_width="wrap_content"
+			android:layout_height="match_parent"
+			android:selectAllOnFocus="true"
+			android:id="@+id/DIR_txtSearch"
+			android:inputType="textShortMessage"
+			android:hint="search" />
+		
+		<ImageView 
+			android:layout_width="wrap_content"
+			android:layout_height="match_parent"
+			android:id="@+id/DIR_btSearch"
+			android:src="@drawable/dir_search"
+			android:clickable="true"
+			android:onClick="onSearchSelected" />
+		
+		<ImageView 
+			android:layout_width="wrap_content"
+			android:layout_height="match_parent"
+			android:id="@+id/DIR_btOptions"
+			android:src="@drawable/dir_opts"
+			android:clickable="true"
+			android:onClick="onDirOptsSelected" />"
+		
+	</LinearLayout>
+	
+	<ListView
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:id="@+id/DIR_ListRoot"
+		android:layout_below="@id/DIR_lOptions"
+		android:padding="5dp" >
+	</ListView>
+	
+</RelativeLayout>

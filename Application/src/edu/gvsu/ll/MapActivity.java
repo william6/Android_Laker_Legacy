@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
-public class MapView extends Activity {
+public class MapActivity extends Activity {
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {

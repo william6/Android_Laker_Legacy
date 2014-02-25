@@ -7,22 +7,26 @@ import java.io.InputStream;
 import java.util.Random;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.DataSetObserver;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.Toast;
 
 public class DirectoryActivity extends Activity
 {
@@ -36,6 +40,12 @@ public class DirectoryActivity extends Activity
 		setContentView(R.layout.directory);
 		
 		sInstance = this;
+		
+		EditText searchBar = ((EditText)findViewById(R.id.DIR_txtSearch));
+		searchBar.setSelected(false);
+		searchBar.setMinimumWidth((int)(getWindowManager().getDefaultDisplay().getWidth() * 2 / 3) );	//TODO -- set width of search bar
+		getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+		
 		
 		//copy database file from assets to internal directory so we can use it
 		String strDbName = "Laker Legacies.sqlite";
@@ -74,6 +84,49 @@ public class DirectoryActivity extends Activity
 		//if user leaves this screen by way of the back button, just hide the activity so we can just
 		//bring it to front when they come back to it, that way we don't have to reload the view
 		this.moveTaskToBack(true);
+	}
+	
+	//called from XML. user selected search button
+	public void onSearchSelected(View view){
+		
+	}
+	
+	//called from XML. user selected directory options
+	public void onDirOptsSelected(View view){
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("List options");
+		builder.setMessage("Select list sorting options");
+		builder.setNegativeButton("Cancel", null);
+		builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+			
+			public void onClick(DialogInterface dialog, int which) {
+				Toast.makeText(DirectoryActivity.sInstance, "Ha, good luck with that", Toast.LENGTH_SHORT).show();
+			}
+		});
+		
+		LinearLayout dialogView = new LinearLayout(this);
+		LayoutInflater inflator = (LayoutInflater) DirectoryActivity.sInstance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		inflator.inflate(R.layout.dir_dialog, dialogView);
+		
+		Spinner spinList = (Spinner) dialogView.findViewById(R.id.DIR_DIALOG_spin_listType);
+		Spinner spinSort = (Spinner) dialogView.findViewById(R.id.DIR_DIALOG_spin_sort);
+		
+		// Create an ArrayAdapter using the string array and a default spinner layout
+		ArrayAdapter<CharSequence> listAdapter = ArrayAdapter.createFromResource(this,
+		        R.array.SPIN_listType, android.R.layout.simple_spinner_item);
+		listAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+		spinList.setAdapter(listAdapter);
+		
+		// Create an ArrayAdapter using the string array and a default spinner layout
+		ArrayAdapter<CharSequence> sortAdapter = ArrayAdapter.createFromResource(this,
+				R.array.SPIN_sortMonument, android.R.layout.simple_spinner_item);
+		sortAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+		spinSort.setAdapter(sortAdapter);
+
+		builder.setView(dialogView);		
+		Dialog dialog = builder.create();
+		dialog.setCanceledOnTouchOutside(false);
+		dialog.show();
 	}
 }
 
@@ -173,61 +226,6 @@ class DirectoryInit extends AsyncTask< Object, Void, String >
 	}
 }
 
-
-/*	ListItemView
- * 	Custom view for each item in the ListView
- */
-class ListItemView extends RelativeLayout
-{
-	public ListItemView( Context context, String strTitle, String strSubtitle, String strFilename, int index ) {
-		super(context);
-		LayoutInflater inflator = (LayoutInflater) DirectoryActivity.sInstance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		inflator.inflate(R.layout.listitem, this);
-		ImageView icon = (ImageView)this.findViewById(R.id.LI_imgIcon);
-		TextView title = (TextView)this.findViewById(R.id.LI_txtTitle);
-		TextView subtitle = (TextView)this.findViewById(R.id.LI_txtSubtitle);
-		
-		strFilename = strFilename.toLowerCase().replaceAll(" ", "_").replaceAll("'", "").replaceAll("-", "_");
-		
-		int imgID = DirectoryActivity.sInstance.getResources().getIdentifier(strFilename, "drawable", DirectoryActivity.PACKAGE);
-		//icon.setImageResource(imgID);
-		BitmapFactory.Options imgOptions = new BitmapFactory.Options();
-		imgOptions.inJustDecodeBounds = true;
-		BitmapFactory.decodeResource( getResources(), imgID, imgOptions );
-		imgOptions.inSampleSize = calcIconSize( imgOptions, 100, 100 );
-		imgOptions.inJustDecodeBounds = false;
-		icon.setImageBitmap( BitmapFactory.decodeResource( getResources(), imgID, imgOptions ) );
-		title.setText( strTitle );
-		subtitle.setText( strSubtitle );
-
-		if(index % 2 == 0)
-			this.setBackgroundColor( Color.argb(255, 245, 228, 156 ) );
-		else
-			this.setBackgroundColor( Color.argb( 255, 250, 240, 201 ));
-	}
-
-	private int calcIconSize( BitmapFactory.Options options, int reqWidth, int reqHeight) {
-		// Raw height and width of image
-		final int height = options.outHeight;
-		final int width = options.outWidth;
-		int inSampleSize = 1;
-
-		if (height > reqHeight || width > reqWidth) {
-
-			final int halfHeight = height / 2;
-			final int halfWidth = width / 2;
-
-			// Calculate the largest inSampleSize value that is a power of 2 and keeps both
-			// height and width larger than the requested height and width.
-			while ((halfHeight / inSampleSize) > reqHeight
-					&& (halfWidth / inSampleSize) > reqWidth) {
-				inSampleSize *= 2;
-			}
-		}
-
-		return inSampleSize;
-	}
-}
 
 
 /*	DBListAdapter

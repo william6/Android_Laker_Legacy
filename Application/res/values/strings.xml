@@ -3,5 +3,21 @@
 
 	<string name="hello">Hello World, Android_Laker_LegacyActivity!</string>
 	<string name="app_name">Laker Legacies</string>
+	
+	<string-array name="SPIN_listType" >
+		<item>Building</item>
+		<item>Contributor</item>
+	</string-array>
+	
+	<string-array name="SPIN_sortMonument" >
+		<item>Name</item>
+		<item>Campus</item>
+		<item>Date established</item>
+		<item>Distance from me</item>
+	</string-array>
+	
+	<string-array name="SPIN_sortContributor" >
+		<item>Name</item>
+	</string-array>
 
 </resources>
