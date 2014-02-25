@@ -61,8 +61,10 @@
 			android:name="com.google.android.maps.v2.API_KEY"
 			android:value="AIzaSyAnSu-qUIHQ5IiGZ4E_BuZ_VDxlNoUSYtM" />
 
-		<!-- TODO removed android:value="@integer/google_play_services_version" until we get that sorted out -->
-		<meta-data android:name="com.google.android.gms.version" />
+		<!-- TODO -->
+		<meta-data 
+			android:name="com.google.android.gms.version"
+			android:value="@integer/google_play_services_version" />
 
 		<activity
 			android:name=".MainActivity"
