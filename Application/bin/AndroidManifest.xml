@@ -55,7 +55,8 @@
     android:value="AIzaSyAnSu-qUIHQ5IiGZ4E_BuZ_VDxlNoUSYtM"/>
     <meta-data
             android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
+            android:value="@integer/google_play_services_version"
+            />
     <activity android:name=".MapView">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
@@ -78,6 +79,11 @@
 			android:label="DirectoryActivity"
 			android:name=".DirectoryActivity"
 			android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" >
+		</activity>		
+		<activity 
+		    android:label="DonateActivity"
+		    android:name=".DonateActivity" 
+		    android:theme="@android:style/Theme.Black">
 		</activity>
 	</application>
 

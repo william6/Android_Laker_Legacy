@@ -78,6 +78,11 @@
 			android:label="DirectoryActivity"
 			android:name=".DirectoryActivity"
 			android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" >
+		</activity>		
+		<activity 
+		    android:label="DonateActivity"
+		    android:name=".DonateActivity" 
+		    android:theme="@android:style/Theme.Black">
 		</activity>
 	</application>
 
