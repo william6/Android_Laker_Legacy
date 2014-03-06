@@ -3,7 +3,8 @@ package edu.gvsu.ll;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-
+import android.widget.TabHost;
+import android.widget.TabHost.TabSpec;
 
 public class MainActivity extends Activity {
 		
@@ -15,7 +16,7 @@ public class MainActivity extends Activity {
         /* ENTER THE CLASS YOU ARE TESTING RIGHT HERE.
          * IF YOU'RE TESTING THE MAIN ACTIVITY, COMMENT THE FOLLOWING CODE OUT
          **/
-        Intent intent = new Intent(this, MapActivity.class);
+        Intent intent = new Intent(this, DonateActivity.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 		startActivity(intent);
     }
