@@ -11,7 +11,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
 
 public class DirectoryDialog {
@@ -90,7 +89,6 @@ public class DirectoryDialog {
 		mBuilder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
 
 			public void onClick(DialogInterface dialog, int which) {
-				Toast.makeText(DirectoryActivity.sInstance, "Ha, good luck with that", Toast.LENGTH_SHORT).show();
 				int listBy = (Integer) ((Spinner)(((AlertDialog) dialog).findViewById(R.id.DIR_DIALOG_spin_listType))).getSelectedItemPosition();
 				int sortBy = (Integer) ((Spinner)(((AlertDialog) dialog).findViewById(R.id.DIR_DIALOG_spin_sort))).getSelectedItemPosition();
 				
@@ -104,19 +102,22 @@ public class DirectoryDialog {
 
 				switch( sortBy ){
 					case(0):
-						strSort = GTblVal.COL_NAME;
-						selectCols = new String [] { GTblVal.COL_NAME };
+						strSort = QueryType.STR_SORT_NAME;
+						if( strTable.equalsIgnoreCase(GTblVal.TBL_MONUMENT))
+							selectCols = new String [] { GTblVal.COL_NAME };
+						else if( strTable.equalsIgnoreCase(GTblVal.TBL_DONOR))
+							selectCols = new String [] { GTblVal.COL_NAME, GTblVal.COL_DON_ID };
 						break;
 					case(1):
-						strSort = GTblVal.COL_CAMPUS;
+						strSort = QueryType.STR_SORT_CAMPUS;
 						selectCols = new String [] { GTblVal.COL_NAME, GTblVal.COL_CAMPUS };
 						break;
 					case(2):
-						strSort = GTblVal.COL_EST;
+						strSort = QueryType.STR_SORT_DATE;
 						selectCols = new String [] { GTblVal.COL_NAME, GTblVal.COL_EST };
 						break;
 					case(3):
-						strSort = GTblVal.COL_GPS;
+						strSort = QueryType.STR_SORT_DISTANCE;
 						selectCols = new String [] { GTblVal.COL_NAME, GTblVal.COL_LATITUDE, GTblVal.COL_LONGITUDE };
 						break;
 				}	
@@ -125,7 +126,6 @@ public class DirectoryDialog {
 				((DirectoryActivity) mParent ).initDirectory(queryDesc);
 			}
 		});
-
 		mBuilder.setView(mDialogView);
 	}
 	

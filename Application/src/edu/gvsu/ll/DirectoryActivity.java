@@ -5,31 +5,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Random;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.database.Cursor;
 import android.database.DataSetObserver;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.Toast;
 
 public class DirectoryActivity extends Activity
 {
@@ -82,6 +67,9 @@ public class DirectoryActivity extends Activity
         //This opens a loading dialog while it works
         //set default query type
         mListView = (ListView) findViewById(R.id.DIR_ListRoot);
+        mListView.setSmoothScrollbarEnabled(false);
+        mListView.setDividerHeight(10);
+        //TODO -- mListView.addHeaderView( view for selecting list and sort type to replace the current dialog ).
         QueryType query = new QueryType(new String[]{GTblVal.COL_NAME}, 
         								QueryType.STR_LIST_MONUMENT,
         								QueryType.STR_SORT_NAME,

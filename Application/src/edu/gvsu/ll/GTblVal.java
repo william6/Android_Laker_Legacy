@@ -4,8 +4,9 @@ public class GTblVal
 {	
 	//Table names
 	public static final String TBL_MONUMENT  = "MONUMENT";	//monuments table
+	public static final String TBL_MON_IMG	 = "MON_IMG";	//monument image table
 	public static final String TBL_DONOR	 = "DONOR";		//donors table
-	public static final String TBL_IMAGE	 = "IMAGE";		//image table
+	public static final String TBL_DON_IMG	 = "DON_IMG";	//donor image table
 	public static final String TBL_MON_DON	 = "MON_DON";	//monument donors table
 	
 	//Column names
@@ -13,7 +14,6 @@ public class GTblVal
 	public static final String COL_ADDR		 = "addr";		//address
 	public static final String COL_CAMPUS	 = "campus";	//campus name
 	public static final String COL_EST		 = "est";		//date established
-	public static final String COL_GPS		 = "gps";		//GPS coordinates of building
 	public static final String COL_LATITUDE	 = "latitude";	//GPS latitude
 	public static final String COL_LONGITUDE = "longitude";	//GPS longitude
 	public static final String COL_BIO		 = "bio";		//donor biography

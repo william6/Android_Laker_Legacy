@@ -25,9 +25,6 @@ public class ListItemView extends RelativeLayout
 		TextView title = (TextView)this.findViewById(R.id.LI_txtTitle);
 		TextView subtitle = (TextView)this.findViewById(R.id.LI_txtSubtitle);
 		
-		//TODO -- filenaming conventions
-		strFilename = strFilename.toLowerCase().replaceAll(" ", "_").replaceAll("'", "").replaceAll("-", "_");
-		
 		//load image
 		int imgID = DirectoryActivity.sInstance.getResources().getIdentifier(
 				strFilename, "drawable", DirectoryActivity.PACKAGE);
