@@ -96,29 +96,29 @@ public class DirectoryDialog {
 				String strTable = null, strSort = null;
 				
 				if(listBy == 0)
-					strTable = GTblVal.TBL_MONUMENT;
+					strTable = Global.TBL_MONUMENT;
 				else if (listBy == 1)
-					strTable = GTblVal.TBL_DONOR;
+					strTable = Global.TBL_DONOR;
 
 				switch( sortBy ){
 					case(0):
 						strSort = QueryType.STR_SORT_NAME;
-						if( strTable.equalsIgnoreCase(GTblVal.TBL_MONUMENT))
-							selectCols = new String [] { GTblVal.COL_NAME };
-						else if( strTable.equalsIgnoreCase(GTblVal.TBL_DONOR))
-							selectCols = new String [] { GTblVal.COL_NAME, GTblVal.COL_DON_ID };
+						if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT))
+							selectCols = new String [] { Global.COL_NAME };
+						else if( strTable.equalsIgnoreCase(Global.TBL_DONOR))
+							selectCols = new String [] { Global.COL_NAME, Global.COL_DON_ID };
 						break;
 					case(1):
 						strSort = QueryType.STR_SORT_CAMPUS;
-						selectCols = new String [] { GTblVal.COL_NAME, GTblVal.COL_CAMPUS };
+						selectCols = new String [] { Global.COL_NAME, Global.COL_CAMPUS };
 						break;
 					case(2):
 						strSort = QueryType.STR_SORT_DATE;
-						selectCols = new String [] { GTblVal.COL_NAME, GTblVal.COL_EST };
+						selectCols = new String [] { Global.COL_NAME, Global.COL_EST };
 						break;
 					case(3):
 						strSort = QueryType.STR_SORT_DISTANCE;
-						selectCols = new String [] { GTblVal.COL_NAME, GTblVal.COL_LATITUDE, GTblVal.COL_LONGITUDE };
+						selectCols = new String [] { Global.COL_NAME, Global.COL_LATITUDE, Global.COL_LONGITUDE };
 						break;
 				}	
 				

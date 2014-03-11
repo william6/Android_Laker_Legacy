@@ -6,13 +6,12 @@
 	
 	<string-array name="SPIN_listType" >
 		<item>Building</item>
-		<item>Contributor</item>
+		<item>Donor</item>
 	</string-array>
 	
 	<string-array name="SPIN_sortMonument" >
 		<item>Name</item>
 		<item>Campus</item>
-		<item>Date established</item>
 		<item>Distance from me</item>
 	</string-array>
 	

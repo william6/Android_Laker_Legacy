@@ -12,16 +12,25 @@ import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.AdapterView.OnItemSelectedListener;
 
 public class DirectoryActivity extends Activity
 {
-	public static String PACKAGE = "edu.gvsu.ll";
 	public static DirectoryActivity sInstance;
+	
 	private DatabaseManager mDBM;
 	private ListView mListView;
+	private Spinner mSpinList, mSpinSort;
+	private ArrayAdapter<CharSequence> mAdapList;
+	private ArrayAdapter<CharSequence> mAdapSort;
+	
+	private boolean enableInput = false;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState){
@@ -30,12 +39,7 @@ public class DirectoryActivity extends Activity
 		
 		sInstance = this;
 		
-		EditText searchBar = ((EditText)findViewById(R.id.DIR_txtSearch));
-		searchBar.setSelected(false);
-		//TODO -- set width of search bar
-		searchBar.setMinimumWidth((int)(getWindowManager().getDefaultDisplay().getWidth() * 2 / 3) );
-		getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-		
+		setUpView();
 		
 		//copy database file from assets to internal directory so we can use it
 		String strDbName = "Laker Legacies.sqlite";
@@ -69,8 +73,7 @@ public class DirectoryActivity extends Activity
         mListView = (ListView) findViewById(R.id.DIR_ListRoot);
         mListView.setSmoothScrollbarEnabled(false);
         mListView.setDividerHeight(10);
-        //TODO -- mListView.addHeaderView( view for selecting list and sort type to replace the current dialog ).
-        QueryType query = new QueryType(new String[]{GTblVal.COL_NAME}, 
+        QueryType query = new QueryType(new String[]{Global.COL_NAME}, 
         								QueryType.STR_LIST_MONUMENT,
         								QueryType.STR_SORT_NAME,
         								null);
@@ -94,13 +97,117 @@ public class DirectoryActivity extends Activity
 	}
 	
 	//called from XML. user selected directory options
-	public void onDirOptsSelected(View view){
-		DirectoryDialog dialog = new DirectoryDialog(this);
-		dialog.show();
-	}
+//	public void onDirOptsSelected(View view){
+//		DirectoryDialog dialog = new DirectoryDialog(this);
+//		dialog.show();
+//	}
 	
 	public void initDirectory( QueryType queryDescription ){
 		new DirectoryInit( this, mListView, mDBM ).execute(queryDescription);
+	}
+	
+	private void setUpView(){
+		//search bar
+		((EditText)findViewById(R.id.DIR_txtSearch)).setSelected(false);
+		getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+		//set up the spinners
+		mSpinList = (Spinner) findViewById(R.id.DIR_spnList);
+		mSpinSort = (Spinner) findViewById(R.id.DIR_spnSort);
+
+		// set up the List spinner
+		mAdapList = ArrayAdapter.createFromResource(this,
+				R.array.SPIN_listType, android.R.layout.simple_spinner_item);
+		mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+		mSpinList.setAdapter(mAdapList);
+
+		// set up the Sort spinner
+		mAdapSort = ArrayAdapter.createFromResource(this,
+				R.array.SPIN_sortMonument, android.R.layout.simple_spinner_item);
+		mAdapSort.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+		mSpinSort.setAdapter(mAdapList);
+
+		setSpinListeners();
+	}
+	
+	
+	private void setSpinListeners(){
+		
+		//List spinner
+		OnItemSelectedListener listener = new OnItemSelectedListener(){
+
+			//When an item is selected, we want to first update the spinners to display the correct values.
+			//After this, we want to update the directory view with the selection
+			public void onItemSelected(AdapterView<?> adapter, View view, int position, long id) {				
+				CharSequence selection = (CharSequence)adapter.getItemAtPosition(position);
+
+				//If we're listing by monument, update the sorting spinner to sort by monument items
+				if( selection.toString().equalsIgnoreCase("Building")){
+					// set up the Sort spinner
+					mAdapList = ArrayAdapter.createFromResource(DirectoryActivity.sInstance,
+							R.array.SPIN_sortMonument, android.R.layout.simple_spinner_item);
+					mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+					mSpinSort.setAdapter(mAdapList);
+				}
+
+				//list by donor
+				else if( selection.toString().equalsIgnoreCase("Donor")){
+					// set up the Sort spinner
+					mAdapList = ArrayAdapter.createFromResource(DirectoryActivity.sInstance,
+							R.array.SPIN_sortContributor, android.R.layout.simple_spinner_item);
+					mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+					mSpinSort.setAdapter(mAdapList);
+				}
+				if( enableInput ){
+					enableInput = false;
+					initDirectory( createQuery() );
+				}
+			}
+			public void onNothingSelected(AdapterView<?> arg0) { }
+		};
+
+		mSpinList.setOnItemSelectedListener(listener);
+		mSpinSort.setOnItemSelectedListener(listener);
+	}
+	
+	private QueryType createQuery(){
+		int listBy = (Integer) ((Spinner)DirectoryActivity.sInstance.findViewById(R.id.DIR_spnList)).getSelectedItemPosition();
+		int sortBy = (Integer) ((Spinner)DirectoryActivity.sInstance.findViewById(R.id.DIR_spnSort)).getSelectedItemPosition();
+		
+		String [] selectCols = null;
+		String strTable = null, strSort = null;
+		
+		if(listBy == 0)
+			strTable = Global.TBL_MONUMENT;
+		else if (listBy == 1)
+			strTable = Global.TBL_DONOR;
+
+		switch( sortBy ){
+			case(0):
+				strSort = QueryType.STR_SORT_NAME;
+				if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT))
+					selectCols = new String [] { Global.COL_NAME };
+				else if( strTable.equalsIgnoreCase(Global.TBL_DONOR))
+					selectCols = new String [] { Global.COL_NAME, Global.COL_DON_ID };
+				break;
+			case(1):
+				strSort = QueryType.STR_SORT_CAMPUS;
+				selectCols = new String [] { Global.COL_NAME, Global.COL_CAMPUS };
+				break;
+//			case(2):
+//				strSort = QueryType.STR_SORT_DATE;
+//				selectCols = new String [] { Global.COL_NAME, Global.COL_EST };
+//				break;
+			case(2):
+				strSort = QueryType.STR_SORT_DISTANCE;
+				selectCols = new String [] { Global.COL_NAME, Global.COL_LATITUDE, Global.COL_LONGITUDE };
+				break;
+		}	
+		return new QueryType( selectCols, strTable, strSort, null );
+	}
+	
+	public void enableInput(boolean enable){
+		enableInput = enable;
 	}
 }
 

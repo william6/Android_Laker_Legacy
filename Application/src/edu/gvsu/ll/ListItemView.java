@@ -27,7 +27,7 @@ public class ListItemView extends RelativeLayout
 		
 		//load image
 		int imgID = DirectoryActivity.sInstance.getResources().getIdentifier(
-				strFilename, "drawable", DirectoryActivity.PACKAGE);
+				strFilename, "drawable", Global.PACKAGE);
 		
 		if( imgID != 0 )
 			icon.setImageBitmap( getScaledImage(context, imgID) );

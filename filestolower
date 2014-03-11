@@ -4,6 +4,7 @@ for file in *
 	  then
 		continue
 	fi
+	lower="${file,}"
 	lower="${file,,}"
 	lower=${lower// /_}
 	lower=${lower//"'"/}
