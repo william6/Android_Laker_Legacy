@@ -19,5 +19,7 @@
 	<string-array name="SPIN_sortContributor" >
 		<item>Name</item>
 	</string-array>
+	<string name="Directory">Directory</string>
+	<string name="Maps">Maps</string>
 
 </resources>

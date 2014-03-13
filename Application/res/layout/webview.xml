@@ -39,7 +39,7 @@
 	    android:layout_width="fill_parent" 
 	    android:layout_height="100px" 
 	    android:text="This is tab 2"
-	    android:id="@+id/txt2"
+	    android:id="@+id/txt3"
     />
    
      </LinearLayout>
@@ -51,13 +51,12 @@
 	    android:orientation="vertical"
 	    android:paddingTop="100px"
      >
-     <TextView  
-	    android:layout_width="fill_parent" 
-	    android:layout_height="100px" 
-	    android:text="This is tab 3"
-	    android:id="@+id/txt3"
-    />
-   
+     <fragment
+    	class="com.google.android.gms.maps.MapFragment"
+    	android:id="@+id/Map"
+    	android:layout_width="match_parent"
+    	android:layout_height="match_parent"/>
+
     </LinearLayout>
     <LinearLayout
 	    android:layout_width="fill_parent"

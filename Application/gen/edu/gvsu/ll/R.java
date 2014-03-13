@@ -309,21 +309,20 @@ containing a value of this type.
         public static final int LI_imgIcon=0x7f05000e;
         public static final int LI_txtSubtitle=0x7f050010;
         public static final int LI_txtTitle=0x7f05000f;
+        public static final int Map=0x7f050017;
         public static final int hybrid=0x7f050004;
         public static final int none=0x7f050000;
         public static final int normal=0x7f050001;
         public static final int satellite=0x7f050002;
-        public static final int tab1=0x7f050014;
-        public static final int tab2=0x7f050015;
-        public static final int tab3=0x7f050017;
-        public static final int tab4=0x7f050019;
-        public static final int tabHost=0x7f050012;
+        public static final int tab1=0x7f050013;
+        public static final int tab2=0x7f050014;
+        public static final int tab3=0x7f050016;
+        public static final int tab4=0x7f050018;
+        public static final int tabHost=0x7f050011;
         public static final int terrain=0x7f050003;
-        public static final int textView1=0x7f050011;
-        public static final int txt1=0x7f050013;
-        public static final int txt2=0x7f050016;
-        public static final int txt3=0x7f050018;
-        public static final int txt4=0x7f05001a;
+        public static final int txt1=0x7f050012;
+        public static final int txt3=0x7f050015;
+        public static final int txt4=0x7f050019;
     }
     public static final class integer {
         public static final int google_play_services_version=0x7f070000;
@@ -337,6 +336,8 @@ containing a value of this type.
         public static final int webview=0x7f030005;
     }
     public static final class string {
+        public static final int Directory=0x7f06001c;
+        public static final int Maps=0x7f06001d;
         public static final int app_name=0x7f06001b;
         /**   Title for notification shown when GooglePlayServices needs to be
         enabled for a application to work. [CHAR LIMIT=70] 

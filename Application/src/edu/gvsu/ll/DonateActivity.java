@@ -1,6 +1,6 @@
 package edu.gvsu.ll;
 
-import edu.gvsu.ll.R.drawable;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,22 +8,47 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebViewFragment;
+import android.widget.Toast;
 import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 
-public class DonateActivity extends Activity 
+public class DonateActivity extends Activity
 {
+	/*
+	 * I'm planning on keeping this code for good. Once I can get tabs to call activities, this will be
+	 * all set and will work. Lets not edit this commented piece of code. - Matthew
+	 */
+/*
+	private WebView myWebView;
+	
+	@Override
 	public void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.webview);
-		String url = "https://secure.gvsu.edu/giving/lakerlegacies";
+
+		//**THIS WORKS** Added for webview 3/6/14
+		myWebView = new WebView(this);
+		myWebView.getSettings().setJavaScriptEnabled(true);
+		final Activity activity = this;
 		
+        myWebView.setWebViewClient(new WebViewClient() {
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                Toast.makeText(activity, description, Toast.LENGTH_SHORT).show();
+            }
+        });
+		
+        myWebView.loadUrl("https://secure.gvsu.edu/giving/lakerlegacies");
+        setContentView(myWebView);
+		
+*/
+		public void onCreate(Bundle savedInstanceState) 
+		{
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.webview);
 		TabHost tabHost=(TabHost)findViewById(R.id.tabHost);
 		tabHost.setup();
 	    ImageView image = null;
-
         
         //Home Page
         TabSpec spec1=tabHost.newTabSpec("Home");
@@ -50,23 +75,5 @@ public class DonateActivity extends Activity
         tabHost.addTab(spec2);
         tabHost.addTab(spec3);
         tabHost.addTab(spec4);
-
-        /*
-         * Sam, this is commented out because I am working on the tabs view
-         */
-//		/** Called when the activity is first created. */
-//		WebView myWebView = (WebView) findViewById(R.id.tab4);	
-//		myWebView.getSettings().setJavaScriptEnabled(true);
-//		myWebView.setWebViewClient(new WebViewClient() 
-//		{
-//			@Override
-//			public boolean shouldOverrideUrlLoading(WebView view, String url) 
-//			{
-//				view.loadUrl(url);
-//				return true;
-//			}
-//		});
-//    myWebView.loadUrl(url);
-
-	}
+		}
 }
