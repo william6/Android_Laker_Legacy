@@ -4,9 +4,10 @@ public class QueryType
 {
 	public static final String STR_LIST_MONUMENT = Global.TBL_MONUMENT;
 	public static final String STR_LIST_DONOR = Global.TBL_DONOR;
-	public static final String STR_SORT_NAME = Global.COL_NAME;
+	
+	public static final String STR_SORT_MON_NAME = Global.COL_MON_NAME;
+	public static final String STR_SORT_DON_NAME = Global.COL_LNAME;
 	public static final String STR_SORT_CAMPUS = Global.COL_CAMPUS;
-	public static final String STR_SORT_DATE = Global.COL_EST;
 	public static final String STR_SORT_DISTANCE = "DISTANCE";
 	
 	private String [] astrSelectCol;

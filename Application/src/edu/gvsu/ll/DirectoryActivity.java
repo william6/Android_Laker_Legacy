@@ -73,9 +73,9 @@ public class DirectoryActivity extends Activity
         mListView = (ListView) findViewById(R.id.DIR_ListRoot);
         mListView.setSmoothScrollbarEnabled(false);
         mListView.setDividerHeight(10);
-        QueryType query = new QueryType(new String[]{Global.COL_NAME}, 
+        QueryType query = new QueryType(new String[]{Global.COL_MON_NAME}, 
         								QueryType.STR_LIST_MONUMENT,
-        								QueryType.STR_SORT_NAME,
+        								QueryType.STR_SORT_MON_NAME,
         								null);
         initDirectory(query);
 	}
@@ -177,32 +177,38 @@ public class DirectoryActivity extends Activity
 		String [] selectCols = null;
 		String strTable = null, strSort = null;
 		
-		if(listBy == 0)
+		if(listBy == 0){
 			strTable = Global.TBL_MONUMENT;
-		else if (listBy == 1)
+			switch( sortBy ){
+				case(0):
+					strSort = QueryType.STR_SORT_MON_NAME;
+					selectCols = new String [] { Global.COL_MON_NAME };
+					break;
+				case(1):
+					strSort = QueryType.STR_SORT_CAMPUS;
+					selectCols = new String [] { Global.COL_MON_NAME, 
+												Global.COL_CAMPUS };
+					break;
+				case(2):
+					strSort = QueryType.STR_SORT_DISTANCE;
+					selectCols = new String [] { Global.COL_MON_NAME, 
+												Global.COL_LATITUDE, 
+												Global.COL_LONGITUDE };
+			}	
+		}
+		else if (listBy == 1){
 			strTable = Global.TBL_DONOR;
-
-		switch( sortBy ){
-			case(0):
-				strSort = QueryType.STR_SORT_NAME;
-				if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT))
-					selectCols = new String [] { Global.COL_NAME };
-				else if( strTable.equalsIgnoreCase(Global.TBL_DONOR))
-					selectCols = new String [] { Global.COL_NAME, Global.COL_DON_ID };
-				break;
-			case(1):
-				strSort = QueryType.STR_SORT_CAMPUS;
-				selectCols = new String [] { Global.COL_NAME, Global.COL_CAMPUS };
-				break;
-//			case(2):
-//				strSort = QueryType.STR_SORT_DATE;
-//				selectCols = new String [] { Global.COL_NAME, Global.COL_EST };
-//				break;
-			case(2):
-				strSort = QueryType.STR_SORT_DISTANCE;
-				selectCols = new String [] { Global.COL_NAME, Global.COL_LATITUDE, Global.COL_LONGITUDE };
-				break;
-		}	
+			switch(sortBy){
+				case(0):
+					strSort = QueryType.STR_SORT_DON_NAME;
+					selectCols = new String[] { Global.COL_TITLE, 
+												Global.COL_FNAME, 
+												Global.COL_MNAME, 
+												Global.COL_LNAME, 
+												Global.COL_SUFFIX,
+												Global.COL_DON_ID };
+			}
+		}
 		return new QueryType( selectCols, strTable, strSort, null );
 	}
 	

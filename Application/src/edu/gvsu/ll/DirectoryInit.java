@@ -21,50 +21,50 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 	private DatabaseManager dbm;
 	private DBListAdapter lAdapter;
 	private ProgressDialog vDialog;
-	
+
 	public DirectoryInit(Context context, ListView vList, DatabaseManager dbm ){
 		this.context = context;
 		this.vList = vList;
 		this.dbm = dbm;
 	}
-	
-	
+
+
 	@Override
 	protected void onPreExecute(){
 		super.onPreExecute();
-		
+
 		vDialog = new ProgressDialog(DirectoryActivity.sInstance);
 		vDialog.setTitle("Loading data");
 		vDialog.setMessage("Please wait...");
 		vDialog.show();
 	}
-	
+
 	@Override
 	protected String doInBackground(QueryType... params) {
-		
+
 		//grab the query description and create a query
 		String  [] selectColumns = params[0].getSelectColumns();
 		String strTable = params[0].getTableField();
 		String sortBy = params[0].getSortField();
 		String search = params[0].getSearchField();
-		
+
 		String columns = selectColumns[0];
 		for( int i=1; i<selectColumns.length; i++)
 			columns += ", " + selectColumns[i];
 
 		String query =	"SELECT " + columns + " " +
-						"FROM " + strTable + " ";
-		
+				"FROM " + strTable + " ";
+
 		//always search names (donors or monuments)
 		if( search != null )
-			query += "WHERE lower(" + QueryType.STR_SORT_NAME + ") LIKE '%" + search.toLowerCase() + "%' ";
-		
+			query += getSearchQuery(strTable, search);
+
 		if( sortBy.compareTo(QueryType.STR_SORT_DISTANCE) != 0)
 			query += "ORDER BY " + sortBy + " ASC";
-		
+
 		Cursor listCursor = dbm.query(query);
 		listCursor.moveToFirst();
-		
+
 		//TODO -- no results found alert - test to make sure this works
 		if(listCursor.getCount() == 0){
 			lAdapter = new DBListAdapter(context, 1);
@@ -78,7 +78,7 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 
 		// list by monument
 		if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT) ){
-			
+
 			//before we can sort them
 			if( sortBy.compareTo(QueryType.STR_SORT_DISTANCE) == 0 ){
 				//TODO -- get user location
@@ -91,63 +91,73 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 		// list by donor
 		else
 			createDonorViews( listCursor, sortBy );
-		
+
 		return null;
+	}
+	
+	private String getSearchQuery(String strTable, String search){
+		//search MONUMENT
+		if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT) )
+			return "WHERE lower(" + QueryType.STR_SORT_MON_NAME + ") LIKE '%" + search.toLowerCase() + "%' ";
+		//search DONOR
+		else{
+			search = search.toLowerCase();
+			return 	"WHERE lower(" + Global.COL_TITLE + ") LIKE '%" + search + "%' OR " +
+					"lower(" + Global.COL_FNAME + ") LIKE '%" + search + "%' OR " +
+					"lower(" + Global.COL_MNAME + ") LIKE '%" + search + "%' OR " +
+					"lower(" + Global.COL_LNAME + ") LIKE '%" + search + "%' OR " +
+					"lower(" + Global.COL_SUFFIX + ") LIKE '%" + search + "%' ";
+		}
 	}
 
 	@Override
 	protected void onPostExecute(String result){
 		super.onPostExecute(result);
-		
+
 		vList.setAdapter(lAdapter);
 		vDialog.dismiss();
 		DirectoryActivity.sInstance.enableInput(true);
 	}
-	
+
 	//adds a heading view to the list if necessary
 	//returns the current record's type string
 	private String addListHeading(Cursor cursor, DBListAdapter adapter, String previousRecord, String sortBy ){
-		
+
 		//determine current record string
 		String header = "";
 		String strThisRecord = "";
-		if( sortBy.equalsIgnoreCase(Global.COL_NAME ) )
-			strThisRecord = cursor.getString(0);
+		if( sortBy.equalsIgnoreCase(QueryType.STR_SORT_MON_NAME ) )
+			strThisRecord = cursor.getString(0);	//monument name column of query
+		else if( sortBy.equalsIgnoreCase(QueryType.STR_SORT_DON_NAME))
+			strThisRecord = cursor.getString(3);	//last name column of query
 		else if( sortBy.equalsIgnoreCase(Global.COL_CAMPUS ) )
-			strThisRecord = cursor.getString(1);
-		else if( sortBy.equalsIgnoreCase(Global.COL_EST) )
-			strThisRecord = cursor.getString(1);
-		
+			strThisRecord = cursor.getString(1);	//campus column of query
+
 		if(strThisRecord == null)
 			strThisRecord = "";
-		
+
 		//if previous record is null, there is no previous record. if the previous record is an empty string, the previous record is an empty string :)
 		if( previousRecord == null ){
-			
+
 			//create name header
-			if( sortBy.equalsIgnoreCase(Global.COL_NAME) ){
+			if( sortBy.equalsIgnoreCase(QueryType.STR_SORT_MON_NAME) || sortBy.equalsIgnoreCase(QueryType.STR_SORT_DON_NAME) ){
 				header = strThisRecord.substring(0, 1).toUpperCase();
 			}
-			
+
 			//create campus header
 			else if( sortBy.equalsIgnoreCase(Global.COL_CAMPUS) ){
 				header = strThisRecord.toUpperCase();
 			}
-			
-			//create date est header
-			else if( sortBy.equalsIgnoreCase(Global.COL_EST) ){
-				header = strThisRecord;
-			}
 		}
 		else{
 			//do we need to add a name header?
-			if( sortBy.equalsIgnoreCase(QueryType.STR_SORT_NAME ) ){
+			if( sortBy.equalsIgnoreCase(QueryType.STR_SORT_MON_NAME ) || sortBy.equalsIgnoreCase(QueryType.STR_SORT_DON_NAME) ){
 				if(previousRecord.substring(0,1).equalsIgnoreCase(strThisRecord.substring(0,1)))
 					return strThisRecord;
 				else
 					header = strThisRecord.substring(0, 1);
 			}
-			
+
 			//do we need a campus header?
 			else if( sortBy.equalsIgnoreCase(QueryType.STR_SORT_CAMPUS) ){
 				if(previousRecord.compareTo(strThisRecord) == 0 )		//TODO -- better error check with >= or <=
@@ -155,16 +165,8 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 				else
 					header = strThisRecord.toUpperCase();
 			}
-			
-			//do we need a date-est header?
-			else if( sortBy.equalsIgnoreCase(QueryType.STR_SORT_DATE) ){
-				if(previousRecord.compareTo(strThisRecord) == 0 )
-					return strThisRecord;
-				else
-					header = strThisRecord;
-			}
 		}
-		
+
 		//if we need to create a header, inflate a view and add it to the list adapter
 		//inflate custom view
 		LinearLayout lHeading = new LinearLayout(context);
@@ -175,17 +177,17 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 		adapter.addItem( lHeading );
 		return strThisRecord;
 	}
-	
-private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, String previousRecord ){
-		
+
+	private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, String previousRecord ){
+
 		//determine current record string
 		String header = "";
-		
+
 		//if previous record is null, create new header
 		if( previousRecord == null ){
 			header = strThisRecord;
 		}
-		
+
 		//do we need to create a header?
 		else{
 			if(previousRecord.compareTo(strThisRecord) == 0 )
@@ -193,7 +195,7 @@ private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, 
 			else
 				header = strThisRecord;
 		}
-		
+
 		//if we need to create a header, inflate a view and add it to the list adapter
 		//inflate custom view
 		LinearLayout lHeading = new LinearLayout(context);
@@ -204,7 +206,7 @@ private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, 
 		adapter.addItem( lHeading );
 		return strThisRecord;
 	}
-	
+
 	private void createMonumentViews(Cursor cMonument, String strSort){
 		int nRecords = cMonument.getCount();
 		String previousRecord = null;
@@ -216,9 +218,9 @@ private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, 
 
 			//find all images associated with this monument. Pick one to display
 			Cursor cMonImg = dbm.query(
-					"SELECT " + Global.COL_FILENAME + " " +
-					"FROM " + Global.TBL_MON_IMG + " " +
-					"WHERE " + Global.COL_NAME + " = '" + strMonumentName + "'" );
+							"SELECT " + Global.COL_FILENAME + " " +
+							"FROM " + Global.TBL_MON_IMG + " " +
+							"WHERE " + Global.COL_MON_NAME + " = '" + strMonumentName + "'" );
 			cMonImg.moveToFirst();
 			int imgIndex = 0;
 			if( cMonImg.getCount() > 1 ){
@@ -231,38 +233,48 @@ private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, 
 
 			//find all major contributor(s) to this monument. Display all [that fit]
 			Cursor donCursor = dbm.query(
-					"SELECT D." + Global.COL_NAME + " " +
-					"FROM " + Global.TBL_MON_DON + " M, " + Global.TBL_DONOR + " D " +
-					"WHERE M." + Global.COL_NAME + " = '" + strMonumentName + "' AND " +
-					"M." + Global.COL_DON_ID + "=D." + Global.COL_DON_ID );
+							"SELECT D." + Global.COL_TITLE + ", D." + Global.COL_FNAME + ", D." + Global.COL_MNAME + ", D." + Global.COL_LNAME + ", D." + Global.COL_SUFFIX + " " +
+							"FROM " + Global.TBL_MON_DON + " M, " + Global.TBL_DONOR + " D " +
+							"WHERE M." + Global.COL_MON_NAME + " = '" + strMonumentName + "' AND " +
+								"M." + Global.COL_DON_ID + "=D." + Global.COL_DON_ID + " " +
+							"ORDER BY D." + Global.COL_LNAME + " ASC" );
 			donCursor.moveToFirst();
 			for(int j = 0; j < donCursor.getCount(); j++){
 				if( j != 0 )
 					strDonors += "\n";
-				strDonors += donCursor.getString(0);
+				for( int k=0; k<5; k++ )					//TODO make better by removing nulls from database, change to empty strings
+					if(donCursor.getString(k) != null)
+						strDonors += donCursor.getString(k) + " ";
+				strDonors = strDonors.trim();
 				donCursor.moveToNext();
 			}
-			
+
 			previousRecord = addListHeading( cMonument, lAdapter, previousRecord, strSort );
 			lAdapter.addItem(new ListItemView(context, strMonumentName, strDonors, filename, i) );
 			cMonument.moveToNext();
 		}
 	}
-	
+
 	private void createDonorViews( Cursor cDonor, String strSort ){
 		int nRecords = cDonor.getCount();
 		String previousRecord = null;
-		
+
 		//go through the list of donors. Find his/her contributions and images
 		for(int i=0; i<nRecords; i++){
-			String strDonorName = cDonor.getString(0);
+			String strDonorName = "";
+			for(int j=0; j<5; j++){
+				if(cDonor.getString(j) != null)
+					strDonorName += cDonor.getString(j) + " ";
+			}
+			strDonorName = strDonorName.trim();
 			String strMonuments = "";				
-			
+
 			//find all monuments associated with this donor
 			Cursor cMon = dbm.query(
-					"SELECT " + Global.COL_NAME + " " +
-					"FROM " + Global.TBL_MON_DON + " " +
-					"WHERE " + Global.COL_DON_ID + " = " + cDonor.getInt(1) + " " );
+							"SELECT " + Global.COL_MON_NAME + " " +
+							"FROM " + Global.TBL_MON_DON + " " +
+							"WHERE " + Global.COL_DON_ID + " = " + cDonor.getInt(5) + " " +
+							"ORDER BY " + Global.COL_MON_NAME );
 			cMon.moveToFirst();
 			for(int j = 0; j < cMon.getCount(); j++){
 				if( j != 0 )
@@ -270,13 +282,13 @@ private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, 
 				strMonuments += cMon.getString(0);
 				cMon.moveToNext();
 			}				
-			
+
 			//find all images of this donor. Pick one to display
 			Cursor cDonImg = dbm.query(
-					"SELECT I." + Global.COL_FILENAME + " " +
-					"FROM " + Global.TBL_DON_IMG + " I, " + Global.TBL_DONOR + " D " +
-					"WHERE D." + Global.COL_NAME + " = \"" + strDonorName + "\" AND " + 
-						  "D." + Global.COL_DON_ID + " = I." + Global.COL_DON_ID );
+							"SELECT I." + Global.COL_FILENAME + " " +
+							"FROM " + Global.TBL_DON_IMG + " I, " + Global.TBL_DONOR + " D " +
+							"WHERE D." + Global.COL_DON_ID + " = " + cDonor.getInt(5) + " AND " + 
+							"D." + Global.COL_DON_ID + " = I." + Global.COL_DON_ID );
 			cDonImg.moveToFirst();
 
 			//TODO -- if no images of donor, grab an image of a monument this person contributed towards
@@ -284,7 +296,7 @@ private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, 
 				cDonor.moveToNext();
 				continue;
 			}
-			
+
 			//grab a random image of this donor
 			int imgIndex = 0;
 			if( cDonImg.getCount() > 1 ){
@@ -297,50 +309,50 @@ private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, 
 			cDonor.moveToNext();
 		}
 	}
-	
+
 	private void createMonumentLocationViews( Cursor cMonument, double myLat, double myLong ){
-		
+
 		final double EARTH_RADIUS = 3963.16637510;     //radius of the earth in miles
 
 		// Convert cordinates from degrees to radians
-        myLat = Math.toRadians(myLat);
-        myLong = Math.toRadians(myLong);
-        
-        int nRecords = cMonument.getCount();
-        String previousRecord = null;
-        
-        //create sorted set of distance records
-        SortedSet<DistanceRecord> sortedRecords = new TreeSet<DistanceRecord>();
+		myLat = Math.toRadians(myLat);
+		myLong = Math.toRadians(myLong);
 
-        //go through all of the monuments and their locations, calculate their distances from user's location, and sort by distance
-        for( int i=0; i<nRecords; i++){
-        	double thisLat = Math.toRadians(cMonument.getDouble(1));	//current monument's latitude
-        	double thisLong = Math.toRadians(cMonument.getDouble(2));	// and longitude
-        	
-        	// calc distance (miles) between coordinates
-        	double tempA = Math.cos(myLat) * Math.cos(myLong) * Math.cos(thisLat) * Math.cos(thisLong);
-            double tempB = Math.cos(myLat) * Math.sin(myLong) * Math.cos(thisLat) * Math.sin(thisLong);
-            double tempC = Math.sin(myLat)*Math.sin(thisLat);
-            
-            double distance = Math.acos( tempA + tempB + tempC ) * EARTH_RADIUS;
-        	sortedRecords.add( new DistanceRecord( distance, i ) );
-        	cMonument.moveToNext();
-        }
-        
-        DecimalFormat decFormat = new DecimalFormat("#.##");
-        int i=0;
-        for( DistanceRecord thisMonument : sortedRecords ){
-        	
-        	cMonument.moveToPosition( thisMonument.getIndex() );
-        	String strMonumentName = cMonument.getString(0);
+		int nRecords = cMonument.getCount();
+		String previousRecord = null;
+
+		//create sorted set of distance records
+		SortedSet<DistanceRecord> sortedRecords = new TreeSet<DistanceRecord>();
+
+		//go through all of the monuments and their locations, calculate their distances from user's location, and sort by distance
+		for( int i=0; i<nRecords; i++){
+			double thisLat = Math.toRadians(cMonument.getDouble(1));	//current monument's latitude
+			double thisLong = Math.toRadians(cMonument.getDouble(2));	// and longitude
+
+			// calc distance (miles) between coordinates
+			double tempA = Math.cos(myLat) * Math.cos(myLong) * Math.cos(thisLat) * Math.cos(thisLong);
+			double tempB = Math.cos(myLat) * Math.sin(myLong) * Math.cos(thisLat) * Math.sin(thisLong);
+			double tempC = Math.sin(myLat)*Math.sin(thisLat);
+
+			double distance = Math.acos( tempA + tempB + tempC ) * EARTH_RADIUS;
+			sortedRecords.add( new DistanceRecord( distance, i ) );
+			cMonument.moveToNext();
+		}
+
+		DecimalFormat decFormat = new DecimalFormat("#.##");
+		int i=0;
+		for( DistanceRecord thisMonument : sortedRecords ){
+
+			cMonument.moveToPosition( thisMonument.getIndex() );
+			String strMonumentName = cMonument.getString(0);
 			String strDonors = "";
 			String strDistance = decFormat.format( thisMonument.getDistance() ) + " mi";
 
 			//find all images associated with this monument. Pick one to display
 			Cursor cMonImg = dbm.query(
-					"SELECT " + Global.COL_FILENAME + " " +
-					"FROM " + Global.TBL_MON_IMG + " " +
-					"WHERE " + Global.COL_NAME + " = '" + strMonumentName + "'" );
+							"SELECT " + Global.COL_FILENAME + " " +
+							"FROM " + Global.TBL_MON_IMG + " " +
+							"WHERE " + Global.COL_MON_NAME + " = '" + strMonumentName + "'" );
 			cMonImg.moveToFirst();
 			int imgIndex = 0;
 			if( cMonImg.getCount() > 1 ){
@@ -353,22 +365,25 @@ private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, 
 
 			//find all major contributor(s) to this monument. Display all [that fit]
 			Cursor donCursor = dbm.query(
-					"SELECT D." + Global.COL_NAME + " " +
-					"FROM " + Global.TBL_MON_DON + " M, " + Global.TBL_DONOR + " D " +
-					"WHERE M." + Global.COL_NAME + " = '" + strMonumentName + "' AND " +
-					"M." + Global.COL_DON_ID + "=D." + Global.COL_DON_ID );
+							"SELECT D." + Global.COL_TITLE + ", D." + Global.COL_FNAME + ", D." + Global.COL_MNAME + ", D." + Global.COL_LNAME + ", D." + Global.COL_SUFFIX + " " +
+							"FROM " + Global.TBL_MON_DON + " M, " + Global.TBL_DONOR + " D " +
+							"WHERE M." + Global.COL_MON_NAME + " = '" + strMonumentName + "' AND " +
+							"M." + Global.COL_DON_ID + "=D." + Global.COL_DON_ID );
 			donCursor.moveToFirst();
 			for(int j = 0; j < donCursor.getCount(); j++){
 				if( j != 0 )
 					strDonors += "\n";
-				strDonors += donCursor.getString(0);
+				for(int k=0; k<5; k++)
+					if(donCursor.getString(k) != null)		//TODO -- remove null from database
+						strDonors += donCursor.getString(k) + " ";
+				strDonors = strDonors.trim();
 				donCursor.moveToNext();
 			}
-			
+
 			previousRecord = addDistanceHeading( lAdapter, strDistance, previousRecord );
 			lAdapter.addItem( new ListItemView( context, strMonumentName, strDonors, filename, i++ ) );
 			cMonument.moveToNext();
-        }
+		}
 	}
 }
 
@@ -377,12 +392,12 @@ class DistanceRecord implements Comparable<DistanceRecord>
 {
 	private double mDistance;
 	private int mIndex;
-	
+
 	public DistanceRecord( double distance, int index ){
 		mDistance = distance;
 		mIndex = index;
 	}
-		
+
 	public int compareTo(DistanceRecord other) {
 		if( mDistance > other.getDistance() )
 			return 1;
@@ -391,7 +406,7 @@ class DistanceRecord implements Comparable<DistanceRecord>
 		else
 			return 0;
 	}
-	
+
 	public double getDistance(){ return mDistance; }
 	public int getIndex(){ return mIndex; }
 }
