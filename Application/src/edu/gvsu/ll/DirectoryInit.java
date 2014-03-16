@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
@@ -13,9 +14,15 @@ import android.view.LayoutInflater;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class DirectoryInit extends AsyncTask< QueryType, Void, String >
+public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 {
+	private final int STATUS_OK 		= 0;		// AsyncTask returned okay
+	private final int ERR_NO_RESULTS 	= 1;		// no results found
+	private final int ERR_CANCEL		= 2;		//task was cancelled and halted
+	private final int ERR_GENERAL 		= 3;		// some error occurred
+	
 	private Context context;
 	private ListView vList;
 	private DatabaseManager dbm;
@@ -40,83 +47,99 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 	}
 
 	@Override
-	protected String doInBackground(QueryType... params) {
+	protected Integer doInBackground(QueryType... params) {
+		try{
+			//grab the query description and create a query
+			String  [] selectColumns = params[0].getSelectColumns();
+			String strTable = params[0].getTableField();
+			String sortBy = params[0].getSortField();
+			String search = params[0].getSearchField();
 
-		//grab the query description and create a query
-		String  [] selectColumns = params[0].getSelectColumns();
-		String strTable = params[0].getTableField();
-		String sortBy = params[0].getSortField();
-		String search = params[0].getSearchField();
+			String columns = selectColumns[0];
+			for( int i=1; i<selectColumns.length; i++)
+				columns += ", " + selectColumns[i];
 
-		String columns = selectColumns[0];
-		for( int i=1; i<selectColumns.length; i++)
-			columns += ", " + selectColumns[i];
+			String query =	"SELECT " + columns + " " +
+							"FROM " + strTable + " ";
 
-		String query =	"SELECT " + columns + " " +
-				"FROM " + strTable + " ";
+			//always search names (donors or monuments)
+			if( search != null )
+				query += getSearchQuery(strTable, search);
 
-		//always search names (donors or monuments)
-		if( search != null )
-			query += getSearchQuery(strTable, search);
+			if( sortBy.compareTo(QueryType.STR_SORT_DISTANCE) != 0)
+				query += "ORDER BY " + sortBy + " ASC";
 
-		if( sortBy.compareTo(QueryType.STR_SORT_DISTANCE) != 0)
-			query += "ORDER BY " + sortBy + " ASC";
-
-		Cursor listCursor = dbm.query(query);
-		listCursor.moveToFirst();
-
-		//TODO -- no results found alert - test to make sure this works
-		if(listCursor.getCount() == 0){
-			lAdapter = new DBListAdapter(context, 1);
-			TextView vText = new TextView(context);
-			vText.setText( "No results found" );
-			lAdapter.addItem(vText);
-			return null;
-		}
-
-		lAdapter = new DBListAdapter(context, listCursor.getCount());
-
-		// list by monument
-		if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT) ){
-
-			//before we can sort them
-			if( sortBy.compareTo(QueryType.STR_SORT_DISTANCE) == 0 ){
-				//TODO -- get user location
-				createMonumentLocationViews( listCursor, 42.963411, -85.888692);
+			if( isCancelled() )
+				return ERR_CANCEL;
+			
+			Cursor listCursor = dbm.query(query);
+			listCursor.moveToFirst();
+			
+			if( isCancelled() )
+				return ERR_CANCEL;
+			
+			if(listCursor.getCount() == 0){
+				return ERR_NO_RESULTS;
 			}
+
+			lAdapter = new DBListAdapter(context, listCursor.getCount());
+
+			int status = STATUS_OK;
+			
+			// list by monument
+			if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT) ){
+				//check if we're sorting by distance
+				if( sortBy.compareTo(QueryType.STR_SORT_DISTANCE) == 0 ){
+					//TODO -- get user location
+					status = createMonumentLocationViews( listCursor, 42.963411, -85.888692);
+				}
+				else
+					status = createMonumentViews( listCursor, sortBy );
+			}
+
+			// list by donor
 			else
-				createMonumentViews( listCursor, sortBy );
+				status = createDonorViews( listCursor, sortBy );
+
+			return status;
 		}
-
-		// list by donor
-		else
-			createDonorViews( listCursor, sortBy );
-
-		return null;
+		catch(Exception e){
+			return ERR_GENERAL;
+		}
 	}
 	
 	private String getSearchQuery(String strTable, String search){
 		//search MONUMENT
 		if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT) )
-			return "WHERE lower(" + QueryType.STR_SORT_MON_NAME + ") LIKE '%" + search.toLowerCase() + "%' ";
+			return "WHERE lower(" + QueryType.STR_SORT_MON_NAME + ") LIKE '%" + search + "%' ";
 		//search DONOR
-		else{
-			search = search.toLowerCase();
+		else
 			return 	"WHERE lower(" + Global.COL_TITLE + ") LIKE '%" + search + "%' OR " +
 					"lower(" + Global.COL_FNAME + ") LIKE '%" + search + "%' OR " +
 					"lower(" + Global.COL_MNAME + ") LIKE '%" + search + "%' OR " +
 					"lower(" + Global.COL_LNAME + ") LIKE '%" + search + "%' OR " +
 					"lower(" + Global.COL_SUFFIX + ") LIKE '%" + search + "%' ";
-		}
 	}
 
 	@Override
-	protected void onPostExecute(String result){
+	protected void onPostExecute(Integer result){
 		super.onPostExecute(result);
 
 		vList.setAdapter(lAdapter);
+		vDialog.dismiss();	
+		DirectoryActivity.sInstance.enableInput(true);
+		if( result == ERR_NO_RESULTS )
+			Toast.makeText(DirectoryActivity.sInstance, "No results found.", Toast.LENGTH_LONG).show();
+		DirectoryActivity.sInstance.resetAsyncTask();
+	}
+	
+	@Override
+	protected void onCancelled(Integer result){
+		//if this task was cancelled, do not set a new view
 		vDialog.dismiss();
 		DirectoryActivity.sInstance.enableInput(true);
+		super.onCancelled(result);
+		DirectoryActivity.sInstance.resetAsyncTask();
 	}
 
 	//adds a heading view to the list if necessary
@@ -160,7 +183,7 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 
 			//do we need a campus header?
 			else if( sortBy.equalsIgnoreCase(QueryType.STR_SORT_CAMPUS) ){
-				if(previousRecord.compareTo(strThisRecord) == 0 )		//TODO -- better error check with >= or <=
+				if(previousRecord.compareTo(strThisRecord) == 0 )
 					return strThisRecord;
 				else
 					header = strThisRecord.toUpperCase();
@@ -207,12 +230,15 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 		return strThisRecord;
 	}
 
-	private void createMonumentViews(Cursor cMonument, String strSort){
+	private int createMonumentViews(Cursor cMonument, String strSort){
 		int nRecords = cMonument.getCount();
 		String previousRecord = null;
 
 		//go through the list of monuments. Find its donors and images
 		for(int i=0; i<nRecords; i++){
+			if( isCancelled() )
+				return ERR_CANCEL;
+			
 			String strMonumentName = cMonument.getString(0);
 			String strDonors = "";
 
@@ -253,14 +279,18 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 			lAdapter.addItem(new ListItemView(context, strMonumentName, strDonors, filename, i) );
 			cMonument.moveToNext();
 		}
+		return STATUS_OK;
 	}
 
-	private void createDonorViews( Cursor cDonor, String strSort ){
+	private int createDonorViews( Cursor cDonor, String strSort ){
 		int nRecords = cDonor.getCount();
 		String previousRecord = null;
 
 		//go through the list of donors. Find his/her contributions and images
 		for(int i=0; i<nRecords; i++){
+			if( isCancelled() )
+				return ERR_CANCEL;
+			
 			String strDonorName = "";
 			for(int j=0; j<5; j++){
 				if(cDonor.getString(j) != null)
@@ -308,9 +338,10 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 					context, strDonorName, strMonuments, cDonImg.getString(0), i) );
 			cDonor.moveToNext();
 		}
+		return STATUS_OK;
 	}
 
-	private void createMonumentLocationViews( Cursor cMonument, double myLat, double myLong ){
+	private int createMonumentLocationViews( Cursor cMonument, double myLat, double myLong ){
 
 		final double EARTH_RADIUS = 3963.16637510;     //radius of the earth in miles
 
@@ -338,11 +369,16 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 			sortedRecords.add( new DistanceRecord( distance, i ) );
 			cMonument.moveToNext();
 		}
+		
+		if( isCancelled() )
+			return ERR_CANCEL;
 
 		DecimalFormat decFormat = new DecimalFormat("#.##");
 		int i=0;
 		for( DistanceRecord thisMonument : sortedRecords ){
-
+			if( isCancelled() )
+				return ERR_CANCEL;
+			
 			cMonument.moveToPosition( thisMonument.getIndex() );
 			String strMonumentName = cMonument.getString(0);
 			String strDonors = "";
@@ -384,6 +420,7 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, String >
 			lAdapter.addItem( new ListItemView( context, strMonumentName, strDonors, filename, i++ ) );
 			cMonument.moveToNext();
 		}
+		return STATUS_OK;
 	}
 }
 

@@ -4,31 +4,41 @@
 	android:layout_height="match_parent"
 	android:id="@+id/DIR_Root" >
 		
-	<EditText 
+	<RelativeLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:selectAllOnFocus="true"
-		android:id="@+id/DIR_txtSearch"
-		android:inputType="textShortMessage"
-		android:hint="search"
-		android:layout_alignParentTop="true" />
+		android:id="@+id/DIR_rSearch"
+		android:layout_alignParentTop="true" >
+			
+		<ImageView 
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/DIR_btSearch"
+			android:src="@drawable/dir_search"
+			android:clickable="true"
+			android:onClick="onSearchSelected"
+			android:layout_alignParentRight="true" />
 		
-	<ImageView 
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:id="@+id/DIR_btSearch"
-		android:src="@drawable/dir_search"
-		android:clickable="true"
-		android:onClick="onSearchSelected"
-		android:layout_alignParentTop="true"
-		android:layout_alignParentRight="true" />
+		<EditText 
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:selectAllOnFocus="true"
+			android:id="@+id/DIR_txtSearch"
+			android:inputType="textShortMessage"
+			android:hint="search"
+			android:imeOptions="actionSearch"
+			android:layout_alignParentLeft="true"
+			android:layout_toLeftOf="@id/DIR_btSearch"
+			android:layout_alignBottom="@id/DIR_btSearch" />
+	</RelativeLayout>
+	
 	
 	<LinearLayout 
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:id="@+id/DIR_lOptions"
 		android:orientation="horizontal"
-		android:layout_below="@id/DIR_txtSearch" >
+		android:layout_below="@id/DIR_rSearch" >
 		
 		<TextView
 			android:layout_width="wrap_content"

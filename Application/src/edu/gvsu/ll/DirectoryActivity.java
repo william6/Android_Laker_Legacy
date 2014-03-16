@@ -10,8 +10,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
@@ -19,18 +25,29 @@ import android.widget.ListView;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 
 public class DirectoryActivity extends Activity
 {
 	public static DirectoryActivity sInstance;
 	
-	private DatabaseManager mDBM;
-	private ListView mListView;
-	private Spinner mSpinList, mSpinSort;
-	private ArrayAdapter<CharSequence> mAdapList;
-	private ArrayAdapter<CharSequence> mAdapSort;
+	private DatabaseManager 			mDBM;
+	private ListView 					mListView;
+	private Spinner 					mSpinList, mSpinSort;
+	private ArrayAdapter<CharSequence> 	mAdapList;
+	private ArrayAdapter<CharSequence> 	mAdapSort;
+	private QueryType 					mCurrQuery;					//current query
+	private DirectoryInit 				mAsyncTask;					//null if no async task exists
+	private boolean 					enableInput;
 	
-	private boolean enableInput = false;
+	
+	public DirectoryActivity(){
+		mCurrQuery = null;
+		mAsyncTask = null;
+		enableInput = true;
+	}
+	
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState){
@@ -38,9 +55,7 @@ public class DirectoryActivity extends Activity
 		setContentView(R.layout.directory);
 		
 		sInstance = this;
-		
-		setUpView();
-		
+
 		//copy database file from assets to internal directory so we can use it
 		String strDbName = "Laker Legacies.sqlite";
 		InputStream input = null;
@@ -51,7 +66,7 @@ public class DirectoryActivity extends Activity
 			internalDB = new File( getFilesDir().getAbsolutePath() + "/" + strDbName );
 			internalDB.createNewFile();
 			output = new FileOutputStream(internalDB);
-			
+
 			byte[] buffer = new byte[100*1024];
 			while(input.available() > 0){
 				input.read(buffer);
@@ -63,16 +78,12 @@ public class DirectoryActivity extends Activity
 		catch(IOException ioe){
 
 		}
-
 		//load the database file
-        mDBM = new DatabaseManager(this, internalDB, 1);
+		mDBM = new DatabaseManager(this, internalDB, 1);
+
+		setUpView();
         
         //query the database and create the list view asynchronously.
-        //This opens a loading dialog while it works
-        //set default query type
-        mListView = (ListView) findViewById(R.id.DIR_ListRoot);
-        mListView.setSmoothScrollbarEnabled(false);
-        mListView.setDividerHeight(10);
         QueryType query = new QueryType(new String[]{Global.COL_MON_NAME}, 
         								QueryType.STR_LIST_MONUMENT,
         								QueryType.STR_SORT_MON_NAME,
@@ -81,53 +92,97 @@ public class DirectoryActivity extends Activity
 	}
 	
 	
-	@Override
-	public void onBackPressed(){
-		//if user leaves this screen by way of the back button, just hide the activity so we can just
-		//bring it to front when they come back to it, that way we don't have to reload the view
-		this.moveTaskToBack(true);
-	}
+	//TODO ??
+//	@Override
+//	public void onBackPressed(){
+//		//if user leaves this screen by way of the back button, just hide the activity so we can just
+//		//bring it to front when they come back to it, that way we don't have to reload the view
+//	}
 	
 	//called from XML. user selected search button
 	public void onSearchSelected(View view){
-		//hide keyboard
-		getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-		
-		//TODO -- set up new query for database and run it.
+		//hide keyboard?
+		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+		if( imm.isAcceptingText() )
+			imm.hideSoftInputFromWindow(view.getWindowToken(), 0);		
+        
+		initDirectory( createQuery(getSearch()) );
+	}
+
+	
+	/** 
+	 * 
+	 * @param queryDescription : query description to generate a query for the database
+	 * 
+	 * The provided QueryType object will be saved to this.mCurrQuery and the DB will be
+	 * queried accordingly.  UI will update based on the results.
+	 */
+	public void initDirectory( QueryType queryDescription ){
+		if( enableInput ){
+			enableInput = false;
+			
+			//only change the view if the new query differs from the current query
+			if( mCurrQuery == null || !mCurrQuery.equals(queryDescription) ){
+				mCurrQuery = queryDescription;
+				
+				//if another task exists, halt it
+				if( mAsyncTask != null )
+					mAsyncTask.cancel(true);
+				mAsyncTask = new DirectoryInit( this, mListView, mDBM );
+				mAsyncTask.execute(queryDescription);
+			}
+		}
 	}
 	
-	//called from XML. user selected directory options
-//	public void onDirOptsSelected(View view){
-//		DirectoryDialog dialog = new DirectoryDialog(this);
-//		dialog.show();
-//	}
-	
-	public void initDirectory( QueryType queryDescription ){
-		new DirectoryInit( this, mListView, mDBM ).execute(queryDescription);
+	public void resetAsyncTask(){
+		mAsyncTask = null;
 	}
 	
 	private void setUpView(){
-		//search bar
-		((EditText)findViewById(R.id.DIR_txtSearch)).setSelected(false);
+		//search bar - hide search bar on start
+		EditText vSearchBar = (EditText)findViewById(R.id.DIR_txtSearch);
+		vSearchBar.setSelected(false);
 		getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-
+		//listen for soft keyboard event
+		vSearchBar.setOnEditorActionListener(new OnEditorActionListener(){
+			public boolean onEditorAction(TextView view, int actionID, KeyEvent event) {
+				if( actionID == EditorInfo.IME_ACTION_SEARCH ){
+					onSearchSelected(view);
+					return true;
+				}
+				else
+					return false;
+			}
+        });
+		//listen for text changes to the search bar
+		vSearchBar.addTextChangedListener(new TextWatcher(){
+			//TODO -- set up a timer that times out the keyboard. don't query if timeout hasn't happend
+			// (give user time to edit entry).  When timer times out, then start new async task
+			public void onTextChanged(CharSequence string, int start, int before, int count) {
+				initDirectory( createQuery(getSearch()) );
+			}
+			public void afterTextChanged(Editable s) {	}
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {	}
+		});
+		
 		//set up the spinners
 		mSpinList = (Spinner) findViewById(R.id.DIR_spnList);
 		mSpinSort = (Spinner) findViewById(R.id.DIR_spnSort);
-
-		// set up the List spinner
 		mAdapList = ArrayAdapter.createFromResource(this,
 				R.array.SPIN_listType, android.R.layout.simple_spinner_item);
 		mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
 		mSpinList.setAdapter(mAdapList);
-
-		// set up the Sort spinner
 		mAdapSort = ArrayAdapter.createFromResource(this,
 				R.array.SPIN_sortMonument, android.R.layout.simple_spinner_item);
 		mAdapSort.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
 		mSpinSort.setAdapter(mAdapList);
 
 		setSpinListeners();
+		
+		//set up the listview
+        mListView = (ListView) findViewById(R.id.DIR_ListRoot);
+        mListView.setSmoothScrollbarEnabled(false);
+        mListView.setDividerHeight(10);
 	}
 	
 	
@@ -158,10 +213,7 @@ public class DirectoryActivity extends Activity
 					mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
 					mSpinSort.setAdapter(mAdapList);
 				}
-				if( enableInput ){
-					enableInput = false;
-					initDirectory( createQuery() );
-				}
+				initDirectory( createQuery( getSearch() ) );
 			}
 			public void onNothingSelected(AdapterView<?> arg0) { }
 		};
@@ -170,7 +222,25 @@ public class DirectoryActivity extends Activity
 		mSpinSort.setOnItemSelectedListener(listener);
 	}
 	
-	private QueryType createQuery(){
+	private String getSearch(){
+		String strSearch = ((EditText)findViewById(R.id.DIR_txtSearch)).getText().toString();
+		if( strSearch == null || strSearch.length() == 0)
+			return null;
+		else{
+			strSearch = strSearch.trim().toLowerCase();
+			if(strSearch.length() == 0)
+				return null;
+			else
+				return strSearch;
+		}
+	}
+	
+	/**
+	 * 
+	 * @param strSearch : string to search when querying. Pass null for no no search
+	 * @return QueryType object containing all column, table, sort, and search data for a DB query
+	 */
+	private QueryType createQuery(String strSearch){
 		int listBy = (Integer) ((Spinner)DirectoryActivity.sInstance.findViewById(R.id.DIR_spnList)).getSelectedItemPosition();
 		int sortBy = (Integer) ((Spinner)DirectoryActivity.sInstance.findViewById(R.id.DIR_spnSort)).getSelectedItemPosition();
 		
@@ -209,7 +279,7 @@ public class DirectoryActivity extends Activity
 												Global.COL_DON_ID };
 			}
 		}
-		return new QueryType( selectCols, strTable, strSort, null );
+		return new QueryType( selectCols, strTable, strSort, strSearch );
 	}
 	
 	public void enableInput(boolean enable){
