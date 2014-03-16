@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.content.Context;
@@ -14,6 +16,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -39,13 +42,16 @@ public class DirectoryActivity extends Activity
 	private ArrayAdapter<CharSequence> 	mAdapSort;
 	private QueryType 					mCurrQuery;					//current query
 	private DirectoryInit 				mAsyncTask;					//null if no async task exists
-	private boolean 					enableInput;
+	private boolean 					mEnableInput;
+	private Timer						mSearchTimeout;
 	
+	private final long lSearchTimeout = 1500;		//1.5 second timeout
 	
 	public DirectoryActivity(){
 		mCurrQuery = null;
 		mAsyncTask = null;
-		enableInput = true;
+		mEnableInput = true;
+		mSearchTimeout = null;
 	}
 	
 	
@@ -118,9 +124,7 @@ public class DirectoryActivity extends Activity
 	 * queried accordingly.  UI will update based on the results.
 	 */
 	public void initDirectory( QueryType queryDescription ){
-		if( enableInput ){
-			enableInput = false;
-			
+		if( mEnableInput ){			
 			//only change the view if the new query differs from the current query
 			if( mCurrQuery == null || !mCurrQuery.equals(queryDescription) ){
 				mCurrQuery = queryDescription;
@@ -130,6 +134,7 @@ public class DirectoryActivity extends Activity
 					mAsyncTask.cancel(true);
 				mAsyncTask = new DirectoryInit( this, mListView, mDBM );
 				mAsyncTask.execute(queryDescription);
+				mEnableInput = false;
 			}
 		}
 	}
@@ -159,7 +164,22 @@ public class DirectoryActivity extends Activity
 			//TODO -- set up a timer that times out the keyboard. don't query if timeout hasn't happend
 			// (give user time to edit entry).  When timer times out, then start new async task
 			public void onTextChanged(CharSequence string, int start, int before, int count) {
-				initDirectory( createQuery(getSearch()) );
+//				initDirectory( createQuery(getSearch()) );
+				//reset/start search bar timeout timer
+				if( mSearchTimeout != null )
+					mSearchTimeout.cancel();
+				mSearchTimeout = new Timer();
+				mSearchTimeout.schedule(new TimerTask(){
+					@Override
+					public void run() {
+						DirectoryActivity.sInstance.runOnUiThread(new Runnable(){
+							public void run() {
+								initDirectory( createQuery(getSearch()) );
+							}
+						});
+					}
+					
+				}, lSearchTimeout);
 			}
 			public void afterTextChanged(Editable s) {	}
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {	}
@@ -283,7 +303,7 @@ public class DirectoryActivity extends Activity
 	}
 	
 	public void enableInput(boolean enable){
-		enableInput = enable;
+		mEnableInput = enable;
 	}
 }
 
