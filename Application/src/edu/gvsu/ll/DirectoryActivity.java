@@ -4,35 +4,56 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Random;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
-import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.database.Cursor;
 import android.database.DataSetObserver;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.LayoutInflater;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.Toast;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 
 public class DirectoryActivity extends Activity
 {
-	public static String PACKAGE = "edu.gvsu.ll";
 	public static DirectoryActivity sInstance;
-	private DatabaseManager mDBM;
+	
+	private DatabaseManager 			mDBM;
+	private ListView 					mListView;
+	private Spinner 					mSpinList, mSpinSort;
+	private ArrayAdapter<CharSequence> 	mAdapList;
+	private ArrayAdapter<CharSequence> 	mAdapSort;
+	private QueryType 					mCurrQuery;					//current query
+	private DirectoryInit 				mAsyncTask;					//null if no async task exists
+	private boolean 					mEnableInput;
+	private Timer						mSearchTimeout;
+	
+	private final long lSearchTimeout = 1500;		//1.5 second timeout
+	
+	public DirectoryActivity(){
+		mCurrQuery = null;
+		mAsyncTask = null;
+		mEnableInput = true;
+		mSearchTimeout = null;
+	}
+	
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState){
@@ -40,13 +61,7 @@ public class DirectoryActivity extends Activity
 		setContentView(R.layout.directory);
 		
 		sInstance = this;
-		
-		EditText searchBar = ((EditText)findViewById(R.id.DIR_txtSearch));
-		searchBar.setSelected(false);
-		searchBar.setMinimumWidth((int)(getWindowManager().getDefaultDisplay().getWidth() * 2 / 3) );	//TODO -- set width of search bar
-		getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-		
-		
+
 		//copy database file from assets to internal directory so we can use it
 		String strDbName = "Laker Legacies.sqlite";
 		InputStream input = null;
@@ -57,7 +72,7 @@ public class DirectoryActivity extends Activity
 			internalDB = new File( getFilesDir().getAbsolutePath() + "/" + strDbName );
 			internalDB.createNewFile();
 			output = new FileOutputStream(internalDB);
-			
+
 			byte[] buffer = new byte[100*1024];
 			while(input.available() > 0){
 				input.read(buffer);
@@ -69,160 +84,226 @@ public class DirectoryActivity extends Activity
 		catch(IOException ioe){
 
 		}
-
 		//load the database file
-        mDBM = new DatabaseManager(this, internalDB, 1);
+		mDBM = new DatabaseManager(this, internalDB, 1);
+
+		setUpView();
         
         //query the database and create the list view asynchronously.
-        //This opens a loading dialog while it works
-        new DirectoryInit(getApplicationContext(), (ListView) findViewById(R.id.DIR_ListRoot), mDBM ).execute();
+        QueryType query = new QueryType(new String[]{Global.COL_MON_NAME}, 
+        								QueryType.STR_LIST_MONUMENT,
+        								QueryType.STR_SORT_MON_NAME,
+        								null);
+        initDirectory(query);
 	}
 	
 	
-	@Override
-	public void onBackPressed(){
-		//if user leaves this screen by way of the back button, just hide the activity so we can just
-		//bring it to front when they come back to it, that way we don't have to reload the view
-		this.moveTaskToBack(true);
-	}
+	//TODO ??
+//	@Override
+//	public void onBackPressed(){
+//		//if user leaves this screen by way of the back button, just hide the activity so we can just
+//		//bring it to front when they come back to it, that way we don't have to reload the view
+//	}
 	
 	//called from XML. user selected search button
 	public void onSearchSelected(View view){
-		
+		//hide keyboard?
+		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+		if( imm.isAcceptingText() )
+			imm.hideSoftInputFromWindow(view.getWindowToken(), 0);		
+        
+		initDirectory( createQuery(getSearch()) );
+	}
+
+	
+	/** 
+	 * 
+	 * @param queryDescription : query description to generate a query for the database
+	 * 
+	 * The provided QueryType object will be saved to this.mCurrQuery and the DB will be
+	 * queried accordingly.  UI will update based on the results.
+	 */
+	public void initDirectory( QueryType queryDescription ){
+		if( mEnableInput ){			
+			//only change the view if the new query differs from the current query
+			if( mCurrQuery == null || !mCurrQuery.equals(queryDescription) ){
+				mCurrQuery = queryDescription;
+				
+				//if another task exists, halt it
+				if( mAsyncTask != null )
+					mAsyncTask.cancel(true);
+				mAsyncTask = new DirectoryInit( this, mListView, mDBM );
+				mAsyncTask.execute(queryDescription);
+				mEnableInput = false;
+			}
+		}
 	}
 	
-	//called from XML. user selected directory options
-	public void onDirOptsSelected(View view){
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setTitle("List options");
-		builder.setMessage("Select list sorting options");
-		builder.setNegativeButton("Cancel", null);
-		builder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
-			
-			public void onClick(DialogInterface dialog, int which) {
-				Toast.makeText(DirectoryActivity.sInstance, "Ha, good luck with that", Toast.LENGTH_SHORT).show();
+	public void resetAsyncTask(){
+		mAsyncTask = null;
+	}
+	
+	private void setUpView(){
+		//search bar - hide search bar on start
+		EditText vSearchBar = (EditText)findViewById(R.id.DIR_txtSearch);
+		vSearchBar.setSelected(false);
+		getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+		//listen for soft keyboard event
+		vSearchBar.setOnEditorActionListener(new OnEditorActionListener(){
+			public boolean onEditorAction(TextView view, int actionID, KeyEvent event) {
+				if( actionID == EditorInfo.IME_ACTION_SEARCH ){
+					onSearchSelected(view);
+					return true;
+				}
+				else
+					return false;
 			}
+        });
+		//listen for text changes to the search bar
+		vSearchBar.addTextChangedListener(new TextWatcher(){
+			//TODO -- set up a timer that times out the keyboard. don't query if timeout hasn't happend
+			// (give user time to edit entry).  When timer times out, then start new async task
+			public void onTextChanged(CharSequence string, int start, int before, int count) {
+//				initDirectory( createQuery(getSearch()) );
+				//reset/start search bar timeout timer
+				if( mSearchTimeout != null )
+					mSearchTimeout.cancel();
+				mSearchTimeout = new Timer();
+				mSearchTimeout.schedule(new TimerTask(){
+					@Override
+					public void run() {
+						DirectoryActivity.sInstance.runOnUiThread(new Runnable(){
+							public void run() {
+								initDirectory( createQuery(getSearch()) );
+							}
+						});
+					}
+					
+				}, lSearchTimeout);
+			}
+			public void afterTextChanged(Editable s) {	}
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {	}
 		});
 		
-		LinearLayout dialogView = new LinearLayout(this);
-		LayoutInflater inflator = (LayoutInflater) DirectoryActivity.sInstance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		inflator.inflate(R.layout.dir_dialog, dialogView);
-		
-		Spinner spinList = (Spinner) dialogView.findViewById(R.id.DIR_DIALOG_spin_listType);
-		Spinner spinSort = (Spinner) dialogView.findViewById(R.id.DIR_DIALOG_spin_sort);
-		
-		// Create an ArrayAdapter using the string array and a default spinner layout
-		ArrayAdapter<CharSequence> listAdapter = ArrayAdapter.createFromResource(this,
-		        R.array.SPIN_listType, android.R.layout.simple_spinner_item);
-		listAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
-		spinList.setAdapter(listAdapter);
-		
-		// Create an ArrayAdapter using the string array and a default spinner layout
-		ArrayAdapter<CharSequence> sortAdapter = ArrayAdapter.createFromResource(this,
+		//set up the spinners
+		mSpinList = (Spinner) findViewById(R.id.DIR_spnList);
+		mSpinSort = (Spinner) findViewById(R.id.DIR_spnSort);
+		mAdapList = ArrayAdapter.createFromResource(this,
+				R.array.SPIN_listType, android.R.layout.simple_spinner_item);
+		mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+		mSpinList.setAdapter(mAdapList);
+		mAdapSort = ArrayAdapter.createFromResource(this,
 				R.array.SPIN_sortMonument, android.R.layout.simple_spinner_item);
-		sortAdapter.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
-		spinSort.setAdapter(sortAdapter);
+		mAdapSort.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+		mSpinSort.setAdapter(mAdapList);
 
-		builder.setView(dialogView);		
-		Dialog dialog = builder.create();
-		dialog.setCanceledOnTouchOutside(false);
-		dialog.show();
-	}
-}
-
-
-
-class DirectoryInit extends AsyncTask< Object, Void, String >
-{
-	private Context context;
-	private ListView vList;
-	private DatabaseManager dbm;
-	private DBListAdapter lAdapter;
-	private ProgressDialog vDialog;
-	
-	public DirectoryInit(Context context, ListView vList, DatabaseManager dbm ){
-		this.context = context;
-		this.vList = vList;
-		this.dbm = dbm;
+		setSpinListeners();
+		
+		//set up the listview
+        mListView = (ListView) findViewById(R.id.DIR_ListRoot);
+        mListView.setSmoothScrollbarEnabled(false);
+        mListView.setDividerHeight(10);
 	}
 	
 	
-	@Override
-	protected void onPreExecute(){
-		super.onPreExecute();
+	private void setSpinListeners(){
 		
-		vDialog = new ProgressDialog(DirectoryActivity.sInstance);
-		vDialog.setTitle("Loading database");
-		vDialog.setMessage("Please wait...");
-		vDialog.show();
-	}
-	
-	@Override
-	protected String doInBackground(Object... params) {
-		
-		//params can be a custom object which contains info such as query information.
-		//EX. major data item (donor/monument), sorting criteria (name, campus, date est, etc.), and
-		// a search string ("LIKE %search_string%"). This can automate the DB loading process entirely
-		
-		//for now, let's just do a simple query to test this async task works and stuff
-		String query = 	
-				"SELECT " + GTblVal.COL_NAME + " " + 			//TODO -- get custom query (saved setting/last run)
-				"FROM " + GTblVal.TBL_MONUMENT + " " + 
-				"ORDER BY " + GTblVal.COL_NAME + " ASC";
-		
-		Cursor cursor = dbm.query(query);
-		cursor.moveToFirst();
-		int totalHits = cursor.getCount();
-		
-		//right now we only have a monument cursor. so just parse the monuments.		
-		lAdapter = new DBListAdapter(context, cursor.getCount());
-		
-		//go through the list of monuments. Find its donors and images
-		for(int i=0; i<totalHits; i++){
-			String strMonumentName = cursor.getString(0);
-			String strDonors = "";
-			
-			//find all images associated with this monument. Pick one to display
-			Cursor imgCursor = dbm.query(
-						"SELECT " + GTblVal.COL_FILENAME + " " +
-						"FROM " + GTblVal.TBL_IMAGE + " " +
-						"WHERE " + GTblVal.COL_NAME + " = '" + strMonumentName + "'" );
-			imgCursor.moveToFirst();
-			int imgIndex = 0;
-			if( imgCursor.getCount() > 1 ){
-				imgIndex = new Random().nextInt(imgCursor.getCount());
+		//List spinner
+		OnItemSelectedListener listener = new OnItemSelectedListener(){
+
+			//When an item is selected, we want to first update the spinners to display the correct values.
+			//After this, we want to update the directory view with the selection
+			public void onItemSelected(AdapterView<?> adapter, View view, int position, long id) {				
+				CharSequence selection = (CharSequence)adapter.getItemAtPosition(position);
+
+				//If we're listing by monument, update the sorting spinner to sort by monument items
+				if( selection.toString().equalsIgnoreCase("Building")){
+					// set up the Sort spinner
+					mAdapList = ArrayAdapter.createFromResource(DirectoryActivity.sInstance,
+							R.array.SPIN_sortMonument, android.R.layout.simple_spinner_item);
+					mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+					mSpinSort.setAdapter(mAdapList);
+				}
+
+				//list by donor
+				else if( selection.toString().equalsIgnoreCase("Donor")){
+					// set up the Sort spinner
+					mAdapList = ArrayAdapter.createFromResource(DirectoryActivity.sInstance,
+							R.array.SPIN_sortContributor, android.R.layout.simple_spinner_item);
+					mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
+					mSpinSort.setAdapter(mAdapList);
+				}
+				initDirectory( createQuery( getSearch() ) );
 			}
-			imgCursor.move(imgIndex);
-			String filename = imgCursor.getString(0);
-			if(imgIndex >= 1)
-				filename += " " + (imgIndex+1);
-			
-			//find all major contributor(s) to this monument. Display all [that fit]
-			Cursor donCursor = dbm.query(
-						"SELECT D." + GTblVal.COL_NAME + " " +
-						"FROM " + GTblVal.TBL_MON_DON + " M, " + GTblVal.TBL_DONOR + " D " +
-						"WHERE M." + GTblVal.COL_NAME + " = '" + strMonumentName + "' AND " +
-							"M." + GTblVal.COL_DON_ID + "=D." + GTblVal.COL_DON_ID );
-			donCursor.moveToFirst();
-			for(int j = 0; j < donCursor.getCount(); j++){
-				if( j != 0 )
-					strDonors += "\n";
-				strDonors += donCursor.getString(0);
-				donCursor.moveToNext();
-			}
-			
-			lAdapter.addItem(new ListItemView(context, strMonumentName, strDonors, filename, i), i);
-			cursor.moveToNext();
+			public void onNothingSelected(AdapterView<?> arg0) { }
+		};
+
+		mSpinList.setOnItemSelectedListener(listener);
+		mSpinSort.setOnItemSelectedListener(listener);
+	}
+	
+	private String getSearch(){
+		String strSearch = ((EditText)findViewById(R.id.DIR_txtSearch)).getText().toString();
+		if( strSearch == null || strSearch.length() == 0)
+			return null;
+		else{
+			strSearch = strSearch.trim().toLowerCase();
+			if(strSearch.length() == 0)
+				return null;
+			else
+				return strSearch;
 		}
-		return null;
 	}
 	
-	@Override
-	protected void onPostExecute(String result){
-		super.onPostExecute(result);
+	/**
+	 * 
+	 * @param strSearch : string to search when querying. Pass null for no no search
+	 * @return QueryType object containing all column, table, sort, and search data for a DB query
+	 */
+	private QueryType createQuery(String strSearch){
+		int listBy = (Integer) ((Spinner)DirectoryActivity.sInstance.findViewById(R.id.DIR_spnList)).getSelectedItemPosition();
+		int sortBy = (Integer) ((Spinner)DirectoryActivity.sInstance.findViewById(R.id.DIR_spnSort)).getSelectedItemPosition();
 		
-		vList.setAdapter(lAdapter);
-		vDialog.dismiss();
+		String [] selectCols = null;
+		String strTable = null, strSort = null;
+		
+		if(listBy == 0){
+			strTable = Global.TBL_MONUMENT;
+			switch( sortBy ){
+				case(0):
+					strSort = QueryType.STR_SORT_MON_NAME;
+					selectCols = new String [] { Global.COL_MON_NAME };
+					break;
+				case(1):
+					strSort = QueryType.STR_SORT_CAMPUS;
+					selectCols = new String [] { Global.COL_MON_NAME, 
+												Global.COL_CAMPUS };
+					break;
+				case(2):
+					strSort = QueryType.STR_SORT_DISTANCE;
+					selectCols = new String [] { Global.COL_MON_NAME, 
+												Global.COL_LATITUDE, 
+												Global.COL_LONGITUDE };
+			}	
+		}
+		else if (listBy == 1){
+			strTable = Global.TBL_DONOR;
+			switch(sortBy){
+				case(0):
+					strSort = QueryType.STR_SORT_DON_NAME;
+					selectCols = new String[] { Global.COL_TITLE, 
+												Global.COL_FNAME, 
+												Global.COL_MNAME, 
+												Global.COL_LNAME, 
+												Global.COL_SUFFIX,
+												Global.COL_DON_ID };
+			}
+		}
+		return new QueryType( selectCols, strTable, strSort, strSearch );
+	}
+	
+	public void enableInput(boolean enable){
+		mEnableInput = enable;
 	}
 }
 
@@ -236,35 +317,35 @@ class DirectoryInit extends AsyncTask< Object, Void, String >
  */
 class DBListAdapter implements ListAdapter
 {
-	ListItemView listItems[];
-	Context context;
-	int nMaxItems;
+	private ArrayList<View> listItems;
+	private Context context;
+	private int nMaxItems;
 	
 	public DBListAdapter(Context ctx, int maxCount){
 		context = ctx;
 		nMaxItems = maxCount;
-		listItems = new ListItemView[maxCount];
+		listItems = new ArrayList<View>();
 	}
 	
 	public int getMaxCount(){
 		return nMaxItems;
 	}
 	
-	public void addItem(ListItemView vItem, int index){
-		listItems[index] = vItem;
+	public void addItem(View vItem){
+		listItems.add(vItem);
 	}
 	
 	
 	public int getCount() {
-		return listItems.length;
+		return listItems.size();
 	}
 
-	public ListItemView getItem(int index) {
-		return listItems[index];
+	public View getItem(int index) {
+		return listItems.get(index);
 	}
 
 	public long getItemId(int index) {
-		return listItems[index].getId();
+		return getItem(index).getId();
 	}
 
 	public int getItemViewType(int position) {
@@ -272,11 +353,11 @@ class DBListAdapter implements ListAdapter
 	}
 
 	public View getView(int index, View convertView, ViewGroup parent) {
-		return listItems[index];
+		return getItem(index);
 	}
 
 	public int getViewTypeCount() {
-		return listItems.length;
+		return getCount();
 	}
 
 	public boolean hasStableIds() {
@@ -284,7 +365,7 @@ class DBListAdapter implements ListAdapter
 	}
 
 	public boolean isEmpty() {
-		if(listItems == null || listItems.length == 0)
+		if(listItems == null || getCount() == 0)
 			return true;
 		else
 			return false;

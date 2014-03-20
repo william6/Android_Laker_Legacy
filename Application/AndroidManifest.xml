@@ -49,6 +49,7 @@
 		android:debuggable="true"
 		android:icon="@drawable/ic_launcher"
 		android:label="@string/app_name" >
+	        
 
 		<!--
          ** You need to replace the key below with your own key. **

@@ -3,37 +3,64 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:id="@+id/DIR_Root" >
+		
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/DIR_rSearch"
+		android:layout_alignParentTop="true" >
+			
+		<ImageView 
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/DIR_btSearch"
+			android:src="@drawable/dir_search"
+			android:clickable="true"
+			android:onClick="onSearchSelected"
+			android:layout_alignParentRight="true" />
+		
+		<EditText 
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:selectAllOnFocus="true"
+			android:id="@+id/DIR_txtSearch"
+			android:inputType="textShortMessage"
+			android:hint="search"
+			android:imeOptions="actionSearch"
+			android:layout_alignParentLeft="true"
+			android:layout_toLeftOf="@id/DIR_btSearch"
+			android:layout_alignBottom="@id/DIR_btSearch" />
+	</RelativeLayout>
+	
 	
 	<LinearLayout 
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:id="@+id/DIR_lOptions"
 		android:orientation="horizontal"
-		android:layout_alignParentTop="true" >
+		android:layout_below="@id/DIR_rSearch" >
 		
-		<EditText 
+		<TextView
 			android:layout_width="wrap_content"
-			android:layout_height="match_parent"
-			android:selectAllOnFocus="true"
-			android:id="@+id/DIR_txtSearch"
-			android:inputType="textShortMessage"
-			android:hint="search" />
-		
-		<ImageView 
+			android:layout_height="wrap_content"
+			android:text="List:"
+			android:layout_marginLeft="10dp" />
+
+		<Spinner
+			android:id="@+id/DIR_spnList"
 			android:layout_width="wrap_content"
-			android:layout_height="match_parent"
-			android:id="@+id/DIR_btSearch"
-			android:src="@drawable/dir_search"
-			android:clickable="true"
-			android:onClick="onSearchSelected" />
-		
-		<ImageView 
+			android:layout_height="wrap_content" />
+
+		<TextView
 			android:layout_width="wrap_content"
-			android:layout_height="match_parent"
-			android:id="@+id/DIR_btOptions"
-			android:src="@drawable/dir_opts"
-			android:clickable="true"
-			android:onClick="onDirOptsSelected" />"
+			android:layout_height="wrap_content"
+			android:text="Sort:"
+			android:layout_marginLeft="10dp" />
+
+		<Spinner
+			android:id="@+id/DIR_spnSort"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content" />
 		
 	</LinearLayout>
 	
@@ -42,7 +69,9 @@
 		android:layout_height="match_parent"
 		android:id="@+id/DIR_ListRoot"
 		android:layout_below="@id/DIR_lOptions"
-		android:padding="5dp" >
+		android:padding="5dp"
+		android:paddingTop="2dp"
+		android:paddingBottom="2dp" >
 	</ListView>
 	
 </RelativeLayout>
