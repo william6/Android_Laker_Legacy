@@ -17,13 +17,14 @@ public class MapView extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map);
- 
-        map = ((SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map)).getMap();
-        if (map == null) {
-            Toast.makeText(this, "Google Maps not available", 
-                Toast.LENGTH_LONG).show();
-        }
+        //show my location
+         map.setMyLocationEnabled(true);
+//        map = ((SupportMapFragment) getSupportFragmentManager()
+//                .findFragmentById(R.id.map)).getMap();
+//        if (map == null) {
+//            Toast.makeText(this, "Google Maps not available", 
+//                Toast.LENGTH_LONG).show();
+//        }
     }
  
 }
