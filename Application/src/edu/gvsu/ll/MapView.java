@@ -39,7 +39,7 @@ public class MapView extends FragmentActivity   {
                   .title("GVSU - Allendale")
                   .snippet("Allendale Campus"));
               
-              map.moveCamera(CameraUpdateFactory.newLatLngZoom(HAMBURG, 15));
+              map.moveCamera(CameraUpdateFactory.newLatLngZoom(GVSUPEW, 15));
             }
     }
  
