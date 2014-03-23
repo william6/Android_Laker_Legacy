@@ -1,20 +1,13 @@
 package edu.gvsu.ll;
 
-import android.app.Activity;
 import android.app.TabActivity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.view.Menu;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 
-	import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.view.Menu;
-
+	@SuppressWarnings("deprecation")
 	public class MainActivity extends TabActivity {
 
     @Override
