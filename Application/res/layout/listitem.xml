@@ -17,19 +17,20 @@
 		android:layout_height="wrap_content"
 		android:padding="3dp"
 		android:text=""
+		android:typeface="serif"
+		android:textSize="14sp"
 		android:textStyle="bold"
 		android:textColor="#FF000000"
 		android:layout_toRightOf="@id/LI_imgIcon"
 		android:layout_alignTop="@id/LI_imgIcon" />
 	
-	<TextView 
-		android:id="@+id/LI_txtSubtitle"
+	<LinearLayout
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:text=""
-		android:padding="3dp"
-		android:textColor="#FF000000"
+		android:id="@+id/LI_lSubHeadings"
+		android:orientation="vertical"
 		android:layout_toRightOf="@id/LI_imgIcon"
-		android:layout_below="@id/LI_txtTitle" />
-
+		android:layout_below="@id/LI_txtTitle" >
+	</LinearLayout>
+	
 </RelativeLayout>
