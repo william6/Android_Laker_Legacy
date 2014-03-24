@@ -10,20 +10,20 @@ import java.util.TimerTask;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -46,6 +46,7 @@ public class DirectoryActivity extends Activity
 	private Timer						mSearchTimeout;
 	
 	private final long lSearchTimeout = 1500;		//1.5 second timeout
+	private final short GPS_ENABLE_REQUEST = 101;
 	
 	public DirectoryActivity(){
 		mCurrQuery = null;
@@ -107,12 +108,15 @@ public class DirectoryActivity extends Activity
 	
 	//called from XML. user selected search button
 	public void onSearchSelected(View view){
+        hideKeyboard(view);
+		initDirectory( createQuery(getSearch()) );
+	}
+	
+	private void hideKeyboard(View view){
 		//hide keyboard?
 		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 		if( imm.isAcceptingText() )
 			imm.hideSoftInputFromWindow(view.getWindowToken(), 0);		
-        
-		initDirectory( createQuery(getSearch()) );
 	}
 
 	
@@ -161,10 +165,8 @@ public class DirectoryActivity extends Activity
         });
 		//listen for text changes to the search bar
 		vSearchBar.addTextChangedListener(new TextWatcher(){
-			//TODO -- set up a timer that times out the keyboard. don't query if timeout hasn't happend
-			// (give user time to edit entry).  When timer times out, then start new async task
+			// When text is modified, start/reset a timer. when timer expires, start new async task
 			public void onTextChanged(CharSequence string, int start, int before, int count) {
-//				initDirectory( createQuery(getSearch()) );
 				//reset/start search bar timeout timer
 				if( mSearchTimeout != null )
 					mSearchTimeout.cancel();
@@ -189,11 +191,11 @@ public class DirectoryActivity extends Activity
 		mSpinList = (Spinner) findViewById(R.id.DIR_spnList);
 		mSpinSort = (Spinner) findViewById(R.id.DIR_spnSort);
 		mAdapList = ArrayAdapter.createFromResource(this,
-				R.array.SPIN_listType, android.R.layout.simple_spinner_item);
+				R.array.SPIN_listType, R.layout.spinner);
 		mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
 		mSpinList.setAdapter(mAdapList);
 		mAdapSort = ArrayAdapter.createFromResource(this,
-				R.array.SPIN_sortMonument, android.R.layout.simple_spinner_item);
+				R.array.SPIN_sortMonument, R.layout.spinner);
 		mAdapSort.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
 		mSpinSort.setAdapter(mAdapList);
 
@@ -201,8 +203,11 @@ public class DirectoryActivity extends Activity
 		
 		//set up the listview
         mListView = (ListView) findViewById(R.id.DIR_ListRoot);
-        mListView.setSmoothScrollbarEnabled(false);
-        mListView.setDividerHeight(10);
+        mListView.setOnItemClickListener(new OnItemClickListener(){
+			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+				hideKeyboard(mListView);
+			}
+        });
 	}
 	
 	
@@ -213,14 +218,14 @@ public class DirectoryActivity extends Activity
 
 			//When an item is selected, we want to first update the spinners to display the correct values.
 			//After this, we want to update the directory view with the selection
-			public void onItemSelected(AdapterView<?> adapter, View view, int position, long id) {				
+			public void onItemSelected(AdapterView<?> adapter, View view, int position, long id) {
 				CharSequence selection = (CharSequence)adapter.getItemAtPosition(position);
 
 				//If we're listing by monument, update the sorting spinner to sort by monument items
 				if( selection.toString().equalsIgnoreCase("Building")){
 					// set up the Sort spinner
 					mAdapList = ArrayAdapter.createFromResource(DirectoryActivity.sInstance,
-							R.array.SPIN_sortMonument, android.R.layout.simple_spinner_item);
+							R.array.SPIN_sortMonument, R.layout.spinner);
 					mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
 					mSpinSort.setAdapter(mAdapList);
 				}
@@ -229,7 +234,7 @@ public class DirectoryActivity extends Activity
 				else if( selection.toString().equalsIgnoreCase("Donor")){
 					// set up the Sort spinner
 					mAdapList = ArrayAdapter.createFromResource(DirectoryActivity.sInstance,
-							R.array.SPIN_sortContributor, android.R.layout.simple_spinner_item);
+							R.array.SPIN_sortContributor, R.layout.spinner);
 					mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
 					mSpinSort.setAdapter(mAdapList);
 				}
@@ -315,7 +320,7 @@ public class DirectoryActivity extends Activity
  * 	"loadDataFromCursor" function is called. After this is invoked, the
  * 	parent view must be refreshed to show the new results.
  */
-class DBListAdapter implements ListAdapter
+class DBListAdapter extends BaseAdapter 		//TODO? - fastscroll? -- implements SectionIndexer
 {
 	private ArrayList<View> listItems;
 	private Context context;

@@ -26,6 +26,7 @@
 			android:id="@+id/DIR_txtSearch"
 			android:inputType="textShortMessage"
 			android:hint="search"
+			android:typeface="serif"
 			android:imeOptions="actionSearch"
 			android:layout_alignParentLeft="true"
 			android:layout_toLeftOf="@id/DIR_btSearch"
@@ -44,6 +45,7 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="List:"
+			android:typeface="serif"
 			android:layout_marginLeft="10dp" />
 
 		<Spinner
@@ -55,6 +57,7 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="Sort:"
+			android:typeface="serif"
 			android:layout_marginLeft="10dp" />
 
 		<Spinner
@@ -71,7 +74,10 @@
 		android:layout_below="@id/DIR_lOptions"
 		android:padding="5dp"
 		android:paddingTop="2dp"
-		android:paddingBottom="2dp" >
+		android:paddingBottom="2dp"
+		android:smoothScrollbar="false"
+		android:fadeScrollbars="false"
+		android:dividerHeight="3dp" >
 	</ListView>
 	
 </RelativeLayout>
