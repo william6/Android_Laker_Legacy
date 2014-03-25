@@ -16,7 +16,6 @@ public class Global
 	public static final String COL_MON_NAME	 = "name";		//name of monument
 	public static final String COL_ADDR		 = "addr";		//address
 	public static final String COL_CAMPUS	 = "campus";	//campus name
-//	public static final String COL_EST		 = "est";		//date established
 	public static final String COL_LATITUDE	 = "latitude";	//GPS latitude
 	public static final String COL_LONGITUDE = "longitude";	//GPS longitude
 	public static final String COL_TITLE	 = "title";		//Donor Title
