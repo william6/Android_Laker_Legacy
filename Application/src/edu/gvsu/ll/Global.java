@@ -30,4 +30,7 @@ public class Global
 	
 	//defined values
 	public static final long N_BIO_MAX = 32*1024;			//maximum text string for donor's bio (in KB)
+	
+	//Global variable (database access)
+	public static DatabaseManager gDBM = null;
 }
