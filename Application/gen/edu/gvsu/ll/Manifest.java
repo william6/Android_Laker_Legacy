@@ -9,9 +9,6 @@ package edu.gvsu.ll;
 
 public final class Manifest {
     public static final class permission {
-        /**  PUT NECESSARY PERMISSIONS HERE 
- Added for Google Maps permissions 
-         */
         public static final String MAPS_RECEIVE="com.jertt.yummymap.permission.MAPS_RECEIVE";
     }
 }
