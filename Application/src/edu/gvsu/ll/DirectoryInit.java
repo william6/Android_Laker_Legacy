@@ -270,10 +270,9 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			for(int j = 0; j < donCursor.getCount(); j++){
 				String strDonor = "";
 				//build donor name string
-				for( int k=0; k<5; k++ )					//TODO make better by removing nulls from database, change to empty strings
-					if(donCursor.getString(k) != null)
-						strDonor += donCursor.getString(k) + " ";
-				strDonors[j] = strDonor.trim();
+				for( int k=0; k<5; k++ )
+					strDonor += donCursor.getString(k) + " ";
+				strDonors[j] = strDonor.replaceAll("  ", " ").trim();
 				donCursor.moveToNext();
 			}
 
@@ -294,11 +293,9 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 				return ERR_CANCEL;
 			
 			String strDonorName = "";
-			for(int j=0; j<5; j++){
-				if(cDonor.getString(j) != null)
-					strDonorName += cDonor.getString(j) + " ";
-			}
-			strDonorName = strDonorName.trim();			
+			for(int j=0; j<5; j++)
+				strDonorName += cDonor.getString(j) + " ";
+			strDonorName = strDonorName.replaceAll("  ", " ").trim();			
 
 			//find all monuments associated with this donor
 			Cursor cMon = dbm.query(
@@ -430,9 +427,8 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 				String strDonor = "";
 				//build donor name string
 				for(int k=0; k<5; k++)
-					if(donCursor.getString(k) != null)		//TODO -- remove null from database
-						strDonor += donCursor.getString(k) + " ";
-				strDonors[j] = strDonor.trim();
+					strDonor += donCursor.getString(k) + " ";
+				strDonors[j] = strDonor.replaceAll("  ", " ").trim();
 				donCursor.moveToNext();
 			}
 

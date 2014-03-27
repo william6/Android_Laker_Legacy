@@ -1,16 +1,11 @@
 package edu.gvsu.ll;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.text.Editable;
@@ -53,6 +48,7 @@ public class DirectoryActivity extends Activity
 		mAsyncTask = null;
 		mEnableInput = true;
 		mSearchTimeout = null;
+		mDBM = Global.gDBM;
 	}
 	
 	
@@ -62,31 +58,6 @@ public class DirectoryActivity extends Activity
 		setContentView(R.layout.directory);
 		
 		sInstance = this;
-
-		//copy database file from assets to internal directory so we can use it
-		String strDbName = "Laker Legacies.sqlite";
-		InputStream input = null;
-		FileOutputStream output = null;
-		File internalDB = null;
-		try{
-			input = getAssets().open(strDbName);
-			internalDB = new File( getFilesDir().getAbsolutePath() + "/" + strDbName );
-			internalDB.createNewFile();
-			output = new FileOutputStream(internalDB);
-
-			byte[] buffer = new byte[100*1024];
-			while(input.available() > 0){
-				input.read(buffer);
-				output.write(buffer);
-			}
-			input.close();
-			output.close();
-		}
-		catch(IOException ioe){
-
-		}
-		//load the database file
-		mDBM = new DatabaseManager(this, internalDB, 1);
 
 		setUpView();
         
