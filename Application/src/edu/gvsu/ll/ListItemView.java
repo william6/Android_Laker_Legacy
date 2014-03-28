@@ -1,9 +1,12 @@
 package edu.gvsu.ll;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -15,11 +18,22 @@ import android.widget.TextView;
  */
 public class ListItemView extends RelativeLayout
 {
-	public ListItemView( Context context, String strTitle, String [] strSubtitles, String strFilename, int index ) {
+	private int [] mNDonorIDs;
+	
+	public ListItemView( Context context, String strTitle, String [] strSubtitles, String strFilename, 
+						 int [] nDonorIDs, int index ) {
 		super(context);
+		mNDonorIDs = nDonorIDs;
 		
 		//inflate custom listitemview.xml
 		View.inflate(context, R.layout.listitem, this);
+		this.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				Intent intent = new Intent(DirectoryActivity.sInstance, BioActivity.class);
+				intent.putExtra(Global.MSG_DONORS, new BioActivityDesc( mNDonorIDs ) );
+				DirectoryActivity.sInstance.startActivity(intent);
+			}
+		});
 		
 		//load image
 		ImageView icon = (ImageView)this.findViewById(R.id.LI_imgIcon);
@@ -50,16 +64,11 @@ public class ListItemView extends RelativeLayout
 
 	
 	private int calcDeflateRatio( BitmapFactory.Options options, int reqWidth ) {
-		
-		//we don't care about height, just scale the image to the correct width
-
+		//we don't care about height, just scale the image to the approximate desired width
 		final int width = options.outWidth;	//actual width of image
 		int inSampleSize = 1;
-
 		if ( width > reqWidth) {
-
 			final int halfWidth = width / 2;
-
 			// Calculate the largest inSampleSize value that is a power of 2 and keeps
 			// width larger than the requested width.
 			while ((halfWidth / inSampleSize) > reqWidth) {

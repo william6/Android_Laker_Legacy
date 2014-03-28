@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:id="@+id/BIO_RootScroll"
+	android:fadeScrollbars="false" >
+	
+	<RelativeLayout
+		android:id="@+id/BIO_rRoot"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:background="#FFF5E49C" >
+		
+		<TextView 
+			android:id="@+id/BIO_txtDonorName"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="24sp"
+			android:textStyle="bold"
+			android:typeface="serif"
+			android:textColor="#FF000000"
+			android:layout_centerHorizontal="true"
+			android:layout_alignParentTop="true" />
+	
+		<ImageView
+			android:id="@+id/BIO_imgDonor"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_margin="10dp"
+			android:layout_centerHorizontal="true"
+			android:layout_below="@id/BIO_txtDonorName" />
+		
+		<TextView
+			android:id="@+id/BIO_txtBio"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:padding="30dp"
+			android:text=""
+			android:typeface="serif"
+			android:textSize="13sp"
+			android:textColor="#FF000000"
+			android:layout_below="@id/BIO_imgDonor" />
+		
+	</RelativeLayout>
+</ScrollView>

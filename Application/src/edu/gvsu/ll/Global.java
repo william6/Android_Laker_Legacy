@@ -3,7 +3,8 @@ package edu.gvsu.ll;
 public class Global
 {	
 	//Application values
-	public static final String PACKAGE = "edu.gvsu.ll";
+	public static final String 	PACKAGE 	= "edu.gvsu.ll";
+	public static final String 	MSG_DONORS 	= "edu.gvsu.ll.donors";
 	
 	//Table names
 	public static final String TBL_MONUMENT  = "MONUMENT";	//monuments table
@@ -29,7 +30,8 @@ public class Global
 	public static final String COL_IMG_ID	 = "imgid";		//image id
 	
 	//defined values
-	public static final long N_BIO_MAX = 32*1024;			//maximum text string for donor's bio (in KB)
+	public static final long 	N_BIO_MAX 	= 32*1024;			//maximum text string for donor's bio (in KB)
+	public static final long	SERIAL_NUM	= 4262014L;
 	
 	//Global variable (database access)
 	public static DatabaseManager gDBM = null;
