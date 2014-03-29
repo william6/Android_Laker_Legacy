@@ -5,30 +5,26 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="14"
-        android:targetSdkVersion="16" />
-    <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="true" />
+        android:minSdkVersion="15"
+        android:targetSdkVersion="15" />
+    
     <permission
-        android:name="com.jertt.yummymap.permission.MAPS_RECEIVE"
-        android:protectionLevel="signature" />
+		android:name="com.jertt.yummymap.permission.MAPS_RECEIVE"
+		android:protectionLevel="signature" />
 
     <uses-permission android:name="com.jertt.yummymap.permission.MAPS_RECEIVE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
-
-    <!-- External storage for caching. -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
-    <!-- My Location -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- External storage for caching. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> 
 
-    <!-- Maps API needs OpenGL ES 2.0. -->
-
+	<!-- features -->
+	<uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
     <uses-feature
         android:name="android.hardware.location"
         android:required="false" />
@@ -40,17 +36,27 @@
         android:name="android.hardware.wifi"
         android:required="false" />
     
-<application
-        android:allowBackup="true"
+	<application
+        android:debuggable="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name">
- 
-        <activity android:name=".SlideShowActivity" />
-        <activity android:name=".DirectoryActivity" />
-        <activity android:name=".MapView" />
-        <activity android:name=".DonateActivity" />
- 
-        <activity
+        
+		<!--
+         ** You need to replace the key below with your own key. **
+         The example key below will not be accepted because it is not linked to the
+         certificate which you will use to sign this application.
+         See: https://developers.google.com/maps/documentation/android/start
+         for instructions on how to get your own key.
+       	-->
+ 		<meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyBwVlG4CU78DmvCa-aRUqHWOt7_61grGKI" />
+ 		
+ 		<meta-data 
+			android:name="com.google.android.gms.version"
+			android:value="@integer/google_play_services_version" />
+ 		
+ 		<activity
             android:label="@string/app_name"
             android:name=".MainActivity"
             android:theme="@android:style/Theme.NoTitleBar" >
@@ -59,31 +65,34 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-                <activity
-            android:name="net.learn2develop.googlemaps.MainActivity"
-            android:label="@string/app_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
  
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <!--
-         ** You need to replace the key below with your own key. **
-         The example key below will not be accepted because it is not linked to the
-         certificate which you will use to sign this application.
-         See: https://developers.google.com/maps/documentation/android/start
-         for instructions on how to get your own key.
-       -->
-                <meta-data
-            android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyDIjvZFopRyDNxYFELmi7S8jHc_4qxneGA" />
-        		<meta-data 
-			android:name="com.google.android.gms.version"
-			android:value="@integer/google_play_services_version" />
+        <activity
+			android:name=".MapActivity"
+			android:label="MapView"
+			android:theme="@android:style/Theme.Black.NoTitleBar" >
+		</activity>
+		
+		<activity
+			android:name=".DirectoryActivity"
+			android:label="DirectoryActivity"
+			android:theme="@android:style/Theme.Black.NoTitleBar" >
+		</activity>
+		<activity
+			android:name=".DonateActivity"
+			android:label="DonateActivity"
+			android:theme="@android:style/Theme.Black.NoTitleBar" >
+		</activity>
+		<activity
+			android:name=".SlideShowActivity"
+			android:label="SlideShowActivity"
+			android:theme="@android:style/Theme.Black.NoTitleBar" >
+		</activity>
+		
+		<activity
+			android:name=".BioActivity"
+			android:label="BioActivity"
+			android:theme="@android:style/Theme.Black.NoTitleBar" >
+		</activity>
 
     </application>
-
-
 </manifest>

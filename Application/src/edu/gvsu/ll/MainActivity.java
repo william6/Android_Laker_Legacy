@@ -39,7 +39,7 @@ public class MainActivity extends TabActivity {
 				.setContent(in_Directory);
 
 		// Near Me tab
-		Intent in_NearMe = new Intent().setClass(this, MapView.class);
+		Intent in_NearMe = new Intent().setClass(this, MapActivity.class);
 		TabSpec tabSpecNearMe = tabHost
 				.newTabSpec("Near Me")
 				.setIndicator("", resources.getDrawable(R.drawable.ic_maps))

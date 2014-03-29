@@ -3,23 +3,18 @@ package edu.gvsu.ll;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.database.Cursor;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.widget.Toast;
 
-public class MapView extends FragmentActivity   { 
+public class MapActivity extends FragmentActivity   { 
    static final LatLng GVSUPEW = new LatLng(42.963826, -85.677772);
    static final LatLng GVSUALL = new LatLng(42.966746, -85.886718);
    private GoogleMap map;

@@ -50,49 +50,44 @@ public class BioActivity extends FragmentActivity {
 		mNumPages = mNDonorIDs.length;
 		mCurrPage = 0;
 		
-		//set the page images (if applicable)
-		if( mNumPages > 1 ){
-			//grab left and right page buttons and set listeners
-			mVLeftPage = (ImageView) findViewById(R.id.PAG_imgLeftPage);
-			mVLeftPage.setOnClickListener(new OnClickListener(){
-				public void onClick(View v) {
-					mPager.setCurrentItem(mCurrPage-1, true);
-				}
-			});
-			mVRightPage = (ImageView) findViewById(R.id.PAG_imgRightPage);
-			mVRightPage.setOnClickListener(new OnClickListener(){
-				public void onClick(View v){
-					mPager.setCurrentItem(mCurrPage+1, true);
-				}
-			});
-			
-			//load all page images
-			mImgDimPage = getDimPageImage();
-	        mImgCurrPage = getCurrentPageImage();
-	        mImgDimLeft = getDimPageLeftImage();
-	        mImgLeft = getPageLeftImage();
-	        mImgDimRight = getDimPageRightImage();
-	        mImgRight = getPageRightImage();
-			
-	        //set the correct page images
-	        mVLeftPage.setImageBitmap( mImgDimLeft );
-	        mVLeftPage.setClickable(false);
-	        mVRightPage.setImageBitmap( mImgRight );
-	        mVRightPage.setClickable(true);
-	       
-	        //create and set the page indicator images
-	        mPageIndicators = new ImageView [mNumPages];
-	        LinearLayout layout = (LinearLayout) findViewById(R.id.PAG_lPages);
-	        for(int i=0; i<mNumPages; i++){
-	        	mPageIndicators[i] = new ImageView(this);
-	        	mPageIndicators[i].setPadding(10, 0, 10, 0);
-	        	if( i == 0 )
-	        		mPageIndicators[i].setImageBitmap( mImgCurrPage );
-	        	else
-	        		mPageIndicators[i].setImageBitmap( mImgDimPage );
-	        	layout.addView(mPageIndicators[i]);
-	        }
-		}
+		//set the page images
+		//grab left and right page buttons and set listeners
+		mVLeftPage = (ImageView) findViewById(R.id.PAG_imgLeftPage);
+		mVLeftPage.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				mPager.setCurrentItem(mCurrPage-1, true);
+			}
+		});
+		mVRightPage = (ImageView) findViewById(R.id.PAG_imgRightPage);
+		mVRightPage.setOnClickListener(new OnClickListener(){
+			public void onClick(View v){
+				mPager.setCurrentItem(mCurrPage+1, true);
+			}
+		});
+		
+		//load all page images
+		mImgDimPage = getDimPageImage();
+        mImgCurrPage = getCurrentPageImage();
+        mImgDimLeft = getDimPageLeftImage();
+        mImgLeft = getPageLeftImage();
+        mImgDimRight = getDimPageRightImage();
+        mImgRight = getPageRightImage();
+		
+        //set the correct page images
+        setPagerButtons(mCurrPage);
+       
+        //create and set the page indicator images
+        mPageIndicators = new ImageView [mNumPages];
+        LinearLayout layout = (LinearLayout) findViewById(R.id.PAG_lPages);
+        for(int i=0; i<mNumPages; i++){
+        	mPageIndicators[i] = new ImageView(this);
+        	mPageIndicators[i].setPadding(10, 0, 10, 0);
+        	if( i == 0 )
+        		mPageIndicators[i].setImageBitmap( mImgCurrPage );
+        	else
+        		mPageIndicators[i].setImageBitmap( mImgDimPage );
+        	layout.addView(mPageIndicators[i]);
+        }
 		
 		// Instantiate ViewPager and PagerAdapter.
 		mPager = (ViewPager) findViewById(R.id.PAG_pgPager);
@@ -108,29 +103,32 @@ public class BioActivity extends FragmentActivity {
 					else
 						mPageIndicators[i].setImageBitmap( mImgDimPage );
 				}
-				
-				//check endpoints
-				if( position == 0){
-					mVLeftPage.setImageBitmap(mImgDimLeft);
-					mVLeftPage.setClickable(false);
-				}
-				else{
-					mVLeftPage.setImageBitmap(mImgLeft);
-					mVLeftPage.setClickable(true);
-				}
-				
-				if( position == (mNumPages-1) ){
-					mVRightPage.setImageBitmap(mImgDimRight);
-					mVRightPage.setClickable(false);
-				}
-				else{
-					mVRightPage.setImageBitmap(mImgRight);
-					mVRightPage.setClickable(true);
-				}
+				setPagerButtons(position);
 			}
 		});
 		mPagerAdapter = new BioPagerAdapter( getSupportFragmentManager(), mNumPages );
 		new BioInit( mPager, mPagerAdapter ).execute( desc );
+	}
+	
+	public void setPagerButtons(int position){
+		//check endpoints
+		if( position == 0){
+			mVLeftPage.setImageBitmap(mImgDimLeft);
+			mVLeftPage.setClickable(false);
+		}
+		else{
+			mVLeftPage.setImageBitmap(mImgLeft);
+			mVLeftPage.setClickable(true);
+		}
+		
+		if( position == (mNumPages-1) ){
+			mVRightPage.setImageBitmap(mImgDimRight);
+			mVRightPage.setClickable(false);
+		}
+		else{
+			mVRightPage.setImageBitmap(mImgRight);
+			mVRightPage.setClickable(true);
+		}
 	}
 	
 	public Bitmap getCurrentPageImage(){
