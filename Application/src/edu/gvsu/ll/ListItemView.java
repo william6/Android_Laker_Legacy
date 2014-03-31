@@ -1,12 +1,15 @@
 package edu.gvsu.ll;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.view.LayoutInflater;
+import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -15,51 +18,57 @@ import android.widget.TextView;
  */
 public class ListItemView extends RelativeLayout
 {
-	public ListItemView( Context context, String strTitle, String strSubtitle, String strFilename, int index ) {
+	private int [] mNDonorIDs;
+	
+	public ListItemView( Context context, String strTitle, String [] strSubtitles, String strFilename, 
+						 int [] nDonorIDs, int index ) {
 		super(context);
+		mNDonorIDs = nDonorIDs;
 		
-		//inflate custom view
-		LayoutInflater inflator = (LayoutInflater) DirectoryActivity.sInstance.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		inflator.inflate(R.layout.listitem, this);
-		
-		ImageView icon = (ImageView)this.findViewById(R.id.LI_imgIcon);
-		TextView title = (TextView)this.findViewById(R.id.LI_txtTitle);
-		TextView subtitle = (TextView)this.findViewById(R.id.LI_txtSubtitle);
+		//inflate custom listitemview.xml
+		View.inflate(context, R.layout.listitem, this);
+		this.setOnClickListener(new OnClickListener(){
+			public void onClick(View v) {
+				Intent intent = new Intent(DirectoryActivity.sInstance, BioActivity.class);
+				intent.putExtra(Global.MSG_DONORS, new BioActivityDesc( mNDonorIDs ) );
+				DirectoryActivity.sInstance.startActivity(intent);
+			}
+		});
 		
 		//load image
+		ImageView icon = (ImageView)this.findViewById(R.id.LI_imgIcon);
 		int imgID = DirectoryActivity.sInstance.getResources().getIdentifier(
 				strFilename, "drawable", Global.PACKAGE);
 		
 		if( imgID != 0 )
 			icon.setImageBitmap( getScaledImage(context, imgID) );
 		
-		
-		//set text
+		//set texts
+		TextView title = (TextView)this.findViewById(R.id.LI_txtTitle);
 		title.setText( strTitle );
-		subtitle.setText( strSubtitle );
+		LinearLayout subtitleLayout = (LinearLayout)this.findViewById(R.id.LI_lSubHeadings);
+		for( String strSubtitle : strSubtitles ){
+			RelativeLayout layout = new RelativeLayout(context);
+			View.inflate(context, R.layout.listitem_subheading, layout);
+			( (TextView)layout.findViewById(R.id.LI_txtSubtitle) ).setText(strSubtitle);
+			subtitleLayout.addView(layout);
+		}
 		
 		//set background
 		this.setPadding(0,0,5,5);
 		if(index % 2 == 0)
-//			this.setBackgroundDrawable( this.getResources().getDrawable(R.drawable.list_bg_light) );
 			this.setBackgroundColor( Color.argb(255, 245, 228, 156 ) );
 		else
-//			this.setBackgroundDrawable( this.getResources().getDrawable(R.drawable.list_bg_dark) );
 			this.setBackgroundColor( Color.argb( 255, 250, 240, 201 ));
 	}
 
 	
 	private int calcDeflateRatio( BitmapFactory.Options options, int reqWidth ) {
-		
-		//we don't care about height, just scale the image to the correct width
-
+		//we don't care about height, just scale the image to the approximate desired width
 		final int width = options.outWidth;	//actual width of image
 		int inSampleSize = 1;
-
 		if ( width > reqWidth) {
-
 			final int halfWidth = width / 2;
-
 			// Calculate the largest inSampleSize value that is a power of 2 and keeps
 			// width larger than the requested width.
 			while ((halfWidth / inSampleSize) > reqWidth) {

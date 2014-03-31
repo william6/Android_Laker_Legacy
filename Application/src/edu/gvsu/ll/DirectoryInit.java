@@ -41,6 +41,7 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		super.onPreExecute();
 
 		vDialog = new ProgressDialog(DirectoryActivity.sInstance);
+		vDialog.setCanceledOnTouchOutside(false);
 		vDialog.setTitle("Loading data");
 		vDialog.setMessage("Please wait...");
 		vDialog.show();
@@ -240,7 +241,6 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 				return ERR_CANCEL;
 			
 			String strMonumentName = cMonument.getString(0);
-			String strDonors = "";
 
 			//find all images associated with this monument. Pick one to display
 			Cursor cMonImg = dbm.query(
@@ -259,24 +259,27 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 
 			//find all major contributor(s) to this monument. Display all [that fit]
 			Cursor donCursor = dbm.query(
-							"SELECT D." + Global.COL_TITLE + ", D." + Global.COL_FNAME + ", D." + Global.COL_MNAME + ", D." + Global.COL_LNAME + ", D." + Global.COL_SUFFIX + " " +
+							"SELECT D." + Global.COL_TITLE + ", D." + Global.COL_FNAME + ", D." + Global.COL_MNAME + ", D." + Global.COL_LNAME + ", D." + Global.COL_SUFFIX + ", D." + Global.COL_DON_ID + " " +
 							"FROM " + Global.TBL_MON_DON + " M, " + Global.TBL_DONOR + " D " +
 							"WHERE M." + Global.COL_MON_NAME + " = '" + strMonumentName + "' AND " +
 								"M." + Global.COL_DON_ID + "=D." + Global.COL_DON_ID + " " +
 							"ORDER BY D." + Global.COL_LNAME + " ASC" );
 			donCursor.moveToFirst();
+			
+			String [] strDonors = new String [donCursor.getCount()];	//store all donor names
+			int [] nDonors = new int [donCursor.getCount()];			//store all donor IDs
 			for(int j = 0; j < donCursor.getCount(); j++){
-				if( j != 0 )
-					strDonors += "\n";
-				for( int k=0; k<5; k++ )					//TODO make better by removing nulls from database, change to empty strings
-					if(donCursor.getString(k) != null)
-						strDonors += donCursor.getString(k) + " ";
-				strDonors = strDonors.trim();
+				String strDonor = "";
+				nDonors[j] = donCursor.getInt(5);
+				//build donor name string
+				for( int k=0; k<5; k++ )
+					strDonor += donCursor.getString(k) + " ";
+				strDonors[j] = strDonor.replaceAll("  ", " ").trim();
 				donCursor.moveToNext();
 			}
 
 			previousRecord = addListHeading( cMonument, lAdapter, previousRecord, strSort );
-			lAdapter.addItem(new ListItemView(context, strMonumentName, strDonors, filename, i) );
+			lAdapter.addItem( new ListItemView(context, strMonumentName, strDonors, filename, nDonors, i) );
 			cMonument.moveToNext();
 		}
 		return STATUS_OK;
@@ -292,12 +295,9 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 				return ERR_CANCEL;
 			
 			String strDonorName = "";
-			for(int j=0; j<5; j++){
-				if(cDonor.getString(j) != null)
-					strDonorName += cDonor.getString(j) + " ";
-			}
-			strDonorName = strDonorName.trim();
-			String strMonuments = "";				
+			for(int j=0; j<5; j++)
+				strDonorName += cDonor.getString(j) + " ";
+			strDonorName = strDonorName.replaceAll("  ", " ").trim();			
 
 			//find all monuments associated with this donor
 			Cursor cMon = dbm.query(
@@ -306,10 +306,15 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 							"WHERE " + Global.COL_DON_ID + " = " + cDonor.getInt(5) + " " +
 							"ORDER BY " + Global.COL_MON_NAME );
 			cMon.moveToFirst();
+			String [] strMonuments = new String [cMon.getCount()];
+			
+			//TODO -- donor in database has no associated monument (Alexander Calder)
+			if( strMonuments.length == 0){
+				cDonor.moveToNext();
+				continue;
+			}
 			for(int j = 0; j < cMon.getCount(); j++){
-				if( j != 0 )
-					strMonuments += "\n";
-				strMonuments += cMon.getString(0);
+				strMonuments [j] = cMon.getString(0);
 				cMon.moveToNext();
 			}				
 
@@ -320,13 +325,26 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 							"WHERE D." + Global.COL_DON_ID + " = " + cDonor.getInt(5) + " AND " + 
 							"D." + Global.COL_DON_ID + " = I." + Global.COL_DON_ID );
 			cDonImg.moveToFirst();
-
-			//TODO -- if no images of donor, grab an image of a monument this person contributed towards
+			
+			//if no images of donor, grab an image of a monument this person contributed towards
 			if(cDonImg.getCount() == 0){
-				cDonor.moveToNext();
-				continue;
+				
+				int rand = 0;
+				if( strMonuments.length > 1 )
+					rand = new Random().nextInt(strMonuments.length);
+				cDonImg = dbm.query(
+							"SELECT " + Global.COL_FILENAME + " " +
+							"FROM " + Global.TBL_MON_IMG + " " +
+							"WHERE " + Global.COL_MON_NAME + " = '" + strMonuments[rand] + "' ");
+				cDonImg.moveToFirst();
+				
+				//TODO?? no image of donor and no image of building donor contributed toward
+				if(cDonImg.getCount() == 0){
+					cDonor.moveToNext();
+					continue;
+				}
 			}
-
+			
 			//grab a random image of this donor
 			int imgIndex = 0;
 			if( cDonImg.getCount() > 1 ){
@@ -334,8 +352,8 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			}
 			cDonImg.move(imgIndex);
 			previousRecord = addListHeading(cDonor, lAdapter, previousRecord, strSort);
-			lAdapter.addItem( new ListItemView( 
-					context, strDonorName, strMonuments, cDonImg.getString(0), i) );
+			lAdapter.addItem( new ListItemView( context, strDonorName, strMonuments, 
+					cDonImg.getString(0), new int[] { cDonor.getInt(5) }, i) );
 			cDonor.moveToNext();
 		}
 		return STATUS_OK;
@@ -381,7 +399,6 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			
 			cMonument.moveToPosition( thisMonument.getIndex() );
 			String strMonumentName = cMonument.getString(0);
-			String strDonors = "";
 			String strDistance = decFormat.format( thisMonument.getDistance() ) + " mi";
 
 			//find all images associated with this monument. Pick one to display
@@ -401,23 +418,26 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 
 			//find all major contributor(s) to this monument. Display all [that fit]
 			Cursor donCursor = dbm.query(
-							"SELECT D." + Global.COL_TITLE + ", D." + Global.COL_FNAME + ", D." + Global.COL_MNAME + ", D." + Global.COL_LNAME + ", D." + Global.COL_SUFFIX + " " +
+							"SELECT D." + Global.COL_TITLE + ", D." + Global.COL_FNAME + ", D." + Global.COL_MNAME + ", D." + Global.COL_LNAME + ", D." + Global.COL_SUFFIX + ", D." + Global.COL_DON_ID + " " +
 							"FROM " + Global.TBL_MON_DON + " M, " + Global.TBL_DONOR + " D " +
 							"WHERE M." + Global.COL_MON_NAME + " = '" + strMonumentName + "' AND " +
 							"M." + Global.COL_DON_ID + "=D." + Global.COL_DON_ID );
 			donCursor.moveToFirst();
+			
+			String [] strDonors = new String [donCursor.getCount()];	//donor names
+			int [] nDonors = new int [donCursor.getCount()];			//donor IDs
 			for(int j = 0; j < donCursor.getCount(); j++){
-				if( j != 0 )
-					strDonors += "\n";
+				String strDonor = "";
+				nDonors[j] = donCursor.getInt(5);
+				//build donor name string
 				for(int k=0; k<5; k++)
-					if(donCursor.getString(k) != null)		//TODO -- remove null from database
-						strDonors += donCursor.getString(k) + " ";
-				strDonors = strDonors.trim();
+					strDonor += donCursor.getString(k) + " ";
+				strDonors[j] = strDonor.replaceAll("  ", " ").trim();
 				donCursor.moveToNext();
 			}
 
 			previousRecord = addDistanceHeading( lAdapter, strDistance, previousRecord );
-			lAdapter.addItem( new ListItemView( context, strMonumentName, strDonors, filename, i++ ) );
+			lAdapter.addItem( new ListItemView( context, strMonumentName, strDonors, filename, nDonors, i++ ) );
 			cMonument.moveToNext();
 		}
 		return STATUS_OK;
