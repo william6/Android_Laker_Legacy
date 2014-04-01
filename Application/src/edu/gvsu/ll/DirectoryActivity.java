@@ -29,8 +29,8 @@ import android.widget.TextView.OnEditorActionListener;
 public class DirectoryActivity extends Activity
 {
 	public static DirectoryActivity sInstance;
-	
-	private DatabaseManager 			mDBM;
+
+	//--	class member variables	--//
 	private ListView 					mListView;
 	private Spinner 					mSpinList, mSpinSort;
 	private ArrayAdapter<CharSequence> 	mAdapList;
@@ -41,18 +41,20 @@ public class DirectoryActivity extends Activity
 	private Timer						mSearchTimeout;
 	
 	private final long lSearchTimeout = 1500;		//1.5 second timeout
-	private final short GPS_ENABLE_REQUEST = 101;
+//	private final short GPS_ENABLE_REQUEST = 101;
 	
 	public DirectoryActivity(){
 		mCurrQuery = null;
 		mAsyncTask = null;
 		mEnableInput = true;
 		mSearchTimeout = null;
-		mDBM = Global.gDBM;
 	}
 	
-	
 	@Override
+	/**	onCreate
+	 * 	Creates the Directory view by setting up the initial query of the database
+	 * and creating the a DatabaseInit asynctask (initDirectory function)
+	 */
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.directory);
@@ -69,20 +71,21 @@ public class DirectoryActivity extends Activity
         initDirectory(query);
 	}
 	
-	
-	//TODO ??
-//	@Override
-//	public void onBackPressed(){
-//		//if user leaves this screen by way of the back button, just hide the activity so we can just
-//		//bring it to front when they come back to it, that way we don't have to reload the view
-//	}
-	
-	//called from XML. user selected search button
+	/**	onSearchSelected
+	 * @param view : view that called this function (from XML)
+	 * Function is called from directory.xml when user selects the search button.
+	 * Hide the keyboard and start querying the database for the search critera
+	 */
 	public void onSearchSelected(View view){
         hideKeyboard(view);
 		initDirectory( createQuery(getSearch()) );
 	}
 	
+	/**	hideKeyboard
+	 * @param view : view the keyboard is accepting input for
+	 * Checks to see if the view is accepting keyboard input.  If it is, they soft keyboard is
+	 * likely showing so we hide it.
+	 */
 	private void hideKeyboard(View view){
 		//hide keyboard?
 		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -91,12 +94,13 @@ public class DirectoryActivity extends Activity
 	}
 
 	
-	/** 
-	 * 
+	/** initDirectory
 	 * @param queryDescription : query description to generate a query for the database
 	 * 
-	 * The provided QueryType object will be saved to this.mCurrQuery and the DB will be
-	 * queried accordingly.  UI will update based on the results.
+	 * The provided QueryType object will be saved to this.mCurrQuery so we have a
+	 * reference to the currently displayed data.  The database will then be queried
+	 * through the async task, DirectoryInit.  When this task completes, the Directory
+	 * view will be updated accordingly
 	 */
 	public void initDirectory( QueryType queryDescription ){
 		if( mEnableInput ){			
@@ -107,17 +111,25 @@ public class DirectoryActivity extends Activity
 				//if another task exists, halt it
 				if( mAsyncTask != null )
 					mAsyncTask.cancel(true);
-				mAsyncTask = new DirectoryInit( this, mListView, mDBM );
+				mAsyncTask = new DirectoryInit( this, mListView );
 				mAsyncTask.execute(queryDescription);
 				mEnableInput = false;
 			}
 		}
 	}
 	
+	/**	resetAsyncTask
+	 * 	Called by DirectoryInit to erase our reference to the AsyncTask in case
+	 * the task was cancelled for some reason.
+	 */
 	public void resetAsyncTask(){
 		mAsyncTask = null;
 	}
 	
+	
+	/**	setUpView
+	 * 	Creates the directory view and customizes all GUI elements/listeners
+	 */
 	private void setUpView(){
 		//search bar - hide search bar on start
 		EditText vSearchBar = (EditText)findViewById(R.id.DIR_txtSearch);
@@ -182,6 +194,10 @@ public class DirectoryActivity extends Activity
 	}
 	
 	
+	/**	setSpinListeners
+	 * 	Create the listener objects to listen for selection changes in the drop-down
+	 * menus (spinners) for listing and sorting the directory
+	 */
 	private void setSpinListeners(){
 		
 		//List spinner
@@ -218,6 +234,9 @@ public class DirectoryActivity extends Activity
 		mSpinSort.setOnItemSelectedListener(listener);
 	}
 	
+	/**	getSearch
+	 * @return trimmed and lowercased string of the search-text entered by the user
+	 */
 	private String getSearch(){
 		String strSearch = ((EditText)findViewById(R.id.DIR_txtSearch)).getText().toString();
 		if( strSearch == null || strSearch.length() == 0)
@@ -231,10 +250,12 @@ public class DirectoryActivity extends Activity
 		}
 	}
 	
-	/**
-	 * 
+	/**	createQuery
 	 * @param strSearch : string to search when querying. Pass null for no no search
 	 * @return QueryType object containing all column, table, sort, and search data for a DB query
+	 * This function looks at the current state of the Directory view and generates a query
+	 * based on the current state of the application: looks at how the data should be listed,
+	 * how it should be sorted, and how/if data should be searched.
 	 */
 	private QueryType createQuery(String strSearch){
 		int listBy = (Integer) ((Spinner)DirectoryActivity.sInstance.findViewById(R.id.DIR_spnList)).getSelectedItemPosition();
@@ -278,6 +299,12 @@ public class DirectoryActivity extends Activity
 		return new QueryType( selectCols, strTable, strSort, strSearch );
 	}
 	
+	
+	/**	enableInput
+	 * @param enable : true if the Directory view should accept input from the user
+	 * Function is called by DirectoryInit async task to enable input when it has
+	 * completed generating the ListView (or was cancelled)
+	 */
 	public void enableInput(boolean enable){
 		mEnableInput = enable;
 	}
@@ -285,7 +312,7 @@ public class DirectoryActivity extends Activity
 
 
 
-/*	DBListAdapter
+/**	DBListAdapter
  * 	Database ListAdapter is used to populate the ListView with items queried
  * 	from the database.  The adapter doesn't contain anything until the
  * 	"loadDataFromCursor" function is called. After this is invoked, the
@@ -294,11 +321,9 @@ public class DirectoryActivity extends Activity
 class DBListAdapter extends BaseAdapter 		//TODO? - fastscroll? -- implements SectionIndexer
 {
 	private ArrayList<View> listItems;
-	private Context context;
 	private int nMaxItems;
 	
 	public DBListAdapter(Context ctx, int maxCount){
-		context = ctx;
 		nMaxItems = maxCount;
 		listItems = new ArrayList<View>();
 	}

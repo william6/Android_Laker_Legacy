@@ -5,150 +5,55 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.util.Log;
 
+/** Database Manager
+ * Manages the SQLite database file.  This object loads a given database file and restricts
+ * its use to queries only - the database cannot be updated/changed.
+ */
 public class DatabaseManager
 {
+	//--	Private class member variables	--//
 	private SQLiteDatabase 	mDatabase;
 	private File 			mfDatabase;
 	
-	/*
+	/** DatabaseManager
 	 * @param context : context of the application
-	 * @param databaseName : name of database file (with or without the .db extension)
-	 * @param pathToDb : absolute filepath to the directory containing the database
+	 * @param database : database file object pointing to the database of application
 	 * @param version : database version number
 	 */
 	public DatabaseManager(Context context, File database, int version){
-		
-		//check if the given database file exists. If database exists, load it
-		mfDatabase = database; //new File(pathToDb + databaseName);
-		
-		//DEBUG -- TODO - remove db file for debugging
-		//if( mfDatabase.exists() ) mfDatabase.delete();
-		
+		//load the database
+		mfDatabase = database;
 		if( mfDatabase.exists() ){
 			try{
 				mDatabase = SQLiteDatabase.openDatabase(mfDatabase.getAbsolutePath(), null, SQLiteDatabase.OPEN_READWRITE);
-				Log.d("Database " + mfDatabase.getAbsolutePath() + " loaded");
+				Log.d("LAKER_L", "Database " + mfDatabase.getAbsolutePath() + " loaded");
 			}
 			catch( SQLiteException sqle){
-				throw new RuntimeException(sqle.getMessage());
+				throw new RuntimeException("ERROR: the application did not download properly. The database file is either corrupted or missing");
 			}
 		}
-		//if database doesn't exist, create it
-		else{
-			throw new RuntimeException("ERROR: No database file exists.");
-//			Log.d("Database " + databaseName + " doesn't exist. Creating it...");
-//			File dbDir = new File(pathToDb);		//directory of database
-//			dbDir.mkdirs();
-//			dbDir.setReadable(true, false);
-//			dbDir.setWritable(true, false);
-//			mfDatabase.setReadable(true, false);
-//			mfDatabase.setWritable(true, false);
-//			if(dbDir.exists())
-//				Log.d("Created database directory");
-//			try{
-//				mDatabase = SQLiteDatabase.openOrCreateDatabase(mfDatabase, null);
-//				Log.d("Created database " + databaseName + " at " + pathToDb);
-//			}
-//			catch(SQLiteException e){
-//				throw new RuntimeException("ERROR: couldn't create database on device.  " + e.getMessage());
-//			}
-		}
 	}
 	
-//	public boolean createTables(){
-//		
-//		boolean status;
-//		
-//		//create MONUMENT table
-//		String command = "CREATE TABLE IF NOT EXISTS " + GTblVal.TBL_MONUMENT + " ( " +
-//				GTblVal.COL_NAME + " TEXT (128) PRIMARY KEY, " +
-////				GTblVal.COL_ADDR + " TEXT (256) NOT NULL, " +
-//				GTblVal.COL_CAMPUS + " TEXT (32) NOT NULL, " +
-//				GTblVal.COL_EST + " INTEGER, " +
-//				GTblVal.COL_GPS + " TEXT (64) )";
-//		status = executeSQL(command);
-//		
-//		if(!status) return status;
-//		
-//		//create IMAGE table
-//		command = "CREATE TABLE IF NOT EXISTS " + GTblVal.TBL_IMAGE + " ( " +
-//				GTblVal.COL_IMG_ID + " INTEGER PRIMARY KEY, " +
-//				GTblVal.COL_FILENAME + " TEXT (256) NOT NULL, " +
-//				GTblVal.COL_NAME + " TEXT(128) REFERENCES " + GTblVal.TBL_MONUMENT + "(" + GTblVal.COL_NAME + ") )";
-//		status = executeSQL(command);
-//		
-//		if(!status) return status;
-//		
-//		//create DONOR table
-//		command = "CREATE TABLE IF NOT EXISTS " + GTblVal.TBL_DONOR + " ( " +
-//				GTblVal.COL_DON_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-//				GTblVal.COL_NAME + " TEXT (128) NOT NULL, " +
-//				GTblVal.COL_BIO + " TEXT (" + GTblVal.N_BIO_MAX + ") NOT NULL, " +
-//				GTblVal.COL_IMG_ID + " INTEGER REFERENCES " + GTblVal.TBL_IMAGE + "(" + GTblVal.COL_IMG_ID + ") )";
-//		status = executeSQL(command);
-//		
-//		if(!status) return status;
-//		
-//		//create MONUMENT_DONOR table
-//		command = "CREATE TABLE IF NOT EXISTS " + GTblVal.TBL_MON_DON + " ( " +
-//				GTblVal.COL_NAME + " TEXT(128) REFERENCES " + GTblVal.TBL_MONUMENT + "(" + GTblVal.COL_NAME + "), " +
-//				GTblVal.COL_DON_ID + " INTEGER REFERENCES " + GTblVal.TBL_DONOR + "(" + GTblVal.COL_DON_ID + "), " +
-//				"PRIMARY KEY(" + GTblVal.COL_NAME + ", " + GTblVal.COL_DON_ID + ") )";
-//		status = executeSQL(command);
-//		
-//		return status;
-//	}
-	
-	/*
-	 * @param : string value of a SQL command to execute on the database
-	 */
-	public boolean executeSQL(String command){
-		try{
-			mDatabase.execSQL(command);
-			return true;
-		}
-		catch(SQLiteException sqle){
-			Log.e(sqle.getMessage());
-			return false;
-		}
-	}
-	
-	/*
+	/** query
 	 * @param query : string value of SQL query to execute on the database
+	 * @return Cursor object pointing to the results of the query.  Null if an error occurred.
+	 * Queries the database file given the string of a query.
 	 */
-	public Cursor query(String  query){
-		
+	public Cursor query(String query){
 		try{
 			return mDatabase.rawQuery(query, null);
 		}
 		catch(SQLiteException sqle){
-			Log.e(sqle.getMessage());
+			Log.e("LAKER_L", sqle.getMessage());
 			return null;
 		}
-		
 	}
 	
-//	public void saveDatabase(){
-//		// TODO -- DEBUG -- copy db file to external storage so we can get the file. This will be unnecessary when porting. delete this function.
-//		try {
-//			File fPublic = new File((DirectoryActivity.sInstance.getExternalFilesDir(null)).getAbsolutePath() + "/database.db");
-//			fPublic.createNewFile();
-//			
-//			InputStream fin = new FileInputStream(mfDatabase);
-//			OutputStream fout = new FileOutputStream(fPublic);
-//			byte buffer[] = new byte[100*1024];
-//			fin.read(buffer);
-//			fout.write(buffer);
-//			
-//		} catch (FileNotFoundException e) {
-//			e.printStackTrace();
-//		}
-//		catch ( IOException ioe){
-//			
-//		}
-//	}
-	
+	/** getDatabaseName
+	 * @return the name of the database file
+	 */
 	public String getDatabaseName(){
 		return mfDatabase.getName();
 	}

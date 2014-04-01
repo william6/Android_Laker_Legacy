@@ -10,29 +10,38 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-
+/**	BioActivity
+ * 	Creates a ViewPager that is able to cycle a set of BioViews. This class sets
+ * up the ViewPager to have the left/right page-change buttons as well as the
+ * page indicator images.  A new BioActivity is created every time a list item
+ * from DirectoryActivity is selected. When that happens, BioActivity fires
+ * an asynchronous task (BioInit) that creates each individual BioView to be displayed
+ * in the pager.
+ */
 public class BioActivity extends FragmentActivity {
 
+	//--	static instance of this object	--//
 	public static BioActivity sInstance;
 	
-	private int 			mNumPages;
-	private int				mCurrPage;
-	private ViewPager 		mPager;
-	private BioPagerAdapter mPagerAdapter;
-	private int [] 			mNDonorIDs;
-	private ImageView [] 	mPageIndicators;
-	private ImageView 		mVLeftPage, mVRightPage;
-	private Bitmap			mImgDimPage, mImgCurrPage;
-	private Bitmap			mImgDimLeft, mImgLeft, mImgDimRight, mImgRight;
+	//--	class member variables	--//
+	private int 			mNumPages;				//number of pages to be displayed in the pager
+	private int				mCurrPage;				//the page number currently displayed
+	private ViewPager 		mPager;					//pager object keeping track of the pages
+	private BioPagerAdapter mPagerAdapter;			//pager adapter that holds each page
+	private int [] 			mNDonorIDs;				//set of donor id's associated with the respective pages
+	
+	private ImageView [] 	mPageIndicators;		//set of GUI elements to represent the active and inactive pages
+	private ImageView 		mVLeftPage, mVRightPage;//GUI elements to represent the left and right page buttons
+	
+	private Bitmap			mImgDimPage, mImgCurrPage;	//Image objects of an inactive page and active page, respectively
+	private Bitmap			mImgDimLeft, mImgLeft, mImgDimRight, mImgRight;	//Image objects of the page buttons and their dimmed versions
 	private Resources 		mRes;
 	
 
@@ -50,8 +59,7 @@ public class BioActivity extends FragmentActivity {
 		mNumPages = mNDonorIDs.length;
 		mCurrPage = 0;
 		
-		//set the page images
-		//grab left and right page buttons and set listeners
+		//grab left and right GUI page buttons and set their listeners
 		mVLeftPage = (ImageView) findViewById(R.id.PAG_imgLeftPage);
 		mVLeftPage.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
@@ -65,18 +73,18 @@ public class BioActivity extends FragmentActivity {
 			}
 		});
 		
-		//load all page images
-		mImgDimPage = getDimPageImage();
-        mImgCurrPage = getCurrentPageImage();
-        mImgDimLeft = getDimPageLeftImage();
-        mImgLeft = getPageLeftImage();
-        mImgDimRight = getDimPageRightImage();
-        mImgRight = getPageRightImage();
+		//load all page images (do this so we don't ever have to load them again as user moves through pages)
+		mImgDimPage 	= loadImage("page_dim");
+        mImgCurrPage 	= loadImage("page_current");
+        mImgDimLeft 	= loadImage("page_left_dim");
+        mImgLeft 		= loadImage("page_left");
+        mImgDimRight 	= loadImage("page_right_dim");
+        mImgRight 		= loadImage("page_right");
 		
         //set the correct page images
         setPagerButtons(mCurrPage);
        
-        //create and set the page indicator images
+        //create and set the GUI page indicator images (active and inactive page indicators)
         mPageIndicators = new ImageView [mNumPages];
         LinearLayout layout = (LinearLayout) findViewById(R.id.PAG_lPages);
         for(int i=0; i<mNumPages; i++){
@@ -95,6 +103,7 @@ public class BioActivity extends FragmentActivity {
 			public void onPageScrollStateChanged(int state) {}
 			public void onPageScrolled(int position, float positionOffset, int offsetPixels) {}
 
+			//on a page change, set the correct GUI images accordingly
 			public void onPageSelected(int position) {
 				mCurrPage = position;
 				for(int i=0; i<mNumPages; i++){
@@ -106,13 +115,25 @@ public class BioActivity extends FragmentActivity {
 				setPagerButtons(position);
 			}
 		});
+		
+		//create an adapter to keep track of the pages
 		mPagerAdapter = new BioPagerAdapter( getSupportFragmentManager(), mNumPages );
+		
+		//now that everything is set up, query the database and set each page's info accordinly
 		new BioInit( mPager, mPagerAdapter ).execute( desc );
 	}
 	
-	public void setPagerButtons(int position){
-		//check endpoints
-		if( position == 0){
+	/**	setPagerButtons
+	 * @param pageIndex : index of the currently displayed page (0 to mNumPages-1)
+	 * Based on the currently displayed page, each GUI element in the view is updated
+	 * to display the correct image to indicate page movement and page status.
+	 */
+	public void setPagerButtons(int pageIndex){
+		
+		// check endpoints. If the currently displayed page is an endpoint, dim the pager next/previous button
+		
+		// check first page endpoint
+		if( pageIndex == 0){
 			mVLeftPage.setImageBitmap(mImgDimLeft);
 			mVLeftPage.setClickable(false);
 		}
@@ -121,7 +142,8 @@ public class BioActivity extends FragmentActivity {
 			mVLeftPage.setClickable(true);
 		}
 		
-		if( position == (mNumPages-1) ){
+		//check last page endpoint
+		if( pageIndex == (mNumPages-1) ){
 			mVRightPage.setImageBitmap(mImgDimRight);
 			mVRightPage.setClickable(false);
 		}
@@ -131,43 +153,26 @@ public class BioActivity extends FragmentActivity {
 		}
 	}
 	
-	public Bitmap getCurrentPageImage(){
-		int id = mRes.getIdentifier("page_current", "drawable", Global.PACKAGE);
-		 return BitmapFactory.decodeResource(mRes, id);
-	}
-	
-	public Bitmap getDimPageImage(){
-		int id = mRes.getIdentifier("page_dim", "drawable", Global.PACKAGE);
-		return BitmapFactory.decodeResource(mRes, id);
-	}
-	
-	public Bitmap getDimPageLeftImage(){
-		int id = mRes.getIdentifier("page_left_dim", "drawable", Global.PACKAGE);
-		return BitmapFactory.decodeResource(mRes, id);
-	}
-	
-	public Bitmap getPageLeftImage(){
-		int id = mRes.getIdentifier("page_left", "drawable", Global.PACKAGE);
-		return BitmapFactory.decodeResource(mRes, id);
-	}
-	
-	public Bitmap getDimPageRightImage(){
-		int id = mRes.getIdentifier("page_right_dim", "drawable", Global.PACKAGE);
-		return BitmapFactory.decodeResource(mRes, id);
-	}
-	
-	public Bitmap getPageRightImage(){
-		int id = mRes.getIdentifier("page_right", "drawable", Global.PACKAGE);
+	/**	loadImage
+	 * @param strFilename : filename of drawable resource to be loaded
+	 * @return Bitmap image of the given image filename
+	 * Loads an image from the drawable resources of the application and returns it
+	 */
+	private Bitmap loadImage(String strFilename){
+		int id = mRes.getIdentifier(strFilename, "drawable", Global.PACKAGE);
 		return BitmapFactory.decodeResource(mRes, id);
 	}
 }
 
-//TODO -- create left/right page buttons and page number indicator
+/**	BioPagerAdapter
+ * 	PagerAdapter that keeps track of each BioView to be displayed in
+ * the pager. BioViews are held in an array.
+ */
 class BioPagerAdapter extends FragmentStatePagerAdapter
 {
-	
-	private int mPages;
-	private BioView [] mBioPages;
+	//--	class member variables	--//
+	private int mPages;				//number of pages
+	private BioView [] mBioPages;	//array of pages (BioView objects)
 	
 	public BioPagerAdapter(FragmentManager fm, int nPages) {
 		super(fm);
@@ -190,9 +195,13 @@ class BioPagerAdapter extends FragmentStatePagerAdapter
 	}
 }
 
+/**	BioActivityDesc
+ * 	This is a Serializable object needed to pass a set of data
+ * to this Activity as a parameter. This object holds the
+ * IDs of the donors that should be displayed in the pager.
+ */
 class BioActivityDesc implements Serializable
 {
-	
 	private static final long serialVersionUID = Global.SERIAL_NUM;
 	private int [] mnDonorIDs;
 	

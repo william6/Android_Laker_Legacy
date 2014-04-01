@@ -5,7 +5,6 @@ import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
@@ -23,23 +22,30 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 	private final int ERR_CANCEL		= 2;		//task was cancelled and halted
 	private final int ERR_GENERAL 		= 3;		// some error occurred
 	
+	//--	class member variables	--//
 	private Context context;
 	private ListView vList;
 	private DatabaseManager dbm;
 	private DBListAdapter lAdapter;
 	private ProgressDialog vDialog;
 
-	public DirectoryInit(Context context, ListView vList, DatabaseManager dbm ){
+	/**	DirectoryInit
+	 * @param context : context of the Directory
+	 * @param vList : ListView to display all of the ListItemViews created
+	 */
+	public DirectoryInit(Context context, ListView vList ){
 		this.context = context;
 		this.vList = vList;
-		this.dbm = dbm;
+		this.dbm = Global.gDBM;
 	}
 
-
 	@Override
+	/**	onPreExecute
+	 * 	Before we start crunching data, display a dialog to the user so they
+	 * know we're processing data
+	 */
 	protected void onPreExecute(){
 		super.onPreExecute();
-
 		vDialog = new ProgressDialog(DirectoryActivity.sInstance);
 		vDialog.setCanceledOnTouchOutside(false);
 		vDialog.setTitle("Loading data");
@@ -48,6 +54,11 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 	}
 
 	@Override
+	/**	doInBackground
+	 * 	Given a QueryType object passed by params, this function constructs an initial
+	 * query, queries the database for the desired info, creates a view for each item
+	 * for the list, and then populates the list.
+	 */
 	protected Integer doInBackground(QueryType... params) {
 		try{
 			//grab the query description and create a query
@@ -62,10 +73,9 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 
 			String query =	"SELECT " + columns + " " +
 							"FROM " + strTable + " ";
-
-			//always search names (donors or monuments)
-			if( search != null )
-				query += getSearchQuery(strTable, search);
+				
+			//add filters (WHERE clause) - filters search and donors if we're searching donors
+			query += getQueryFilter(strTable, search);
 
 			if( sortBy.compareTo(QueryType.STR_SORT_DISTANCE) != 0)
 				query += "ORDER BY " + sortBy + " ASC";
@@ -109,23 +119,55 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		}
 	}
 	
-	private String getSearchQuery(String strTable, String search){
+	/**	getQueryFilter
+	 * @param strTable : name of the table we're querying
+	 * @param search : string to search the data for (searches name's only). Can be null
+	 * @return string representing the WHERE clause of the query
+	 */
+	private String getQueryFilter(String strTable, String search){		
+		
 		//search MONUMENT
-		if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT) )
-			return "WHERE lower(" + QueryType.STR_SORT_MON_NAME + ") LIKE '%" + search + "%' ";
+		if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT) ){
+			if( search == null )
+				return "";
+			else
+				return "WHERE lower(" + QueryType.STR_SORT_MON_NAME + ") LIKE '%" + search + "%' ";
+		}
+		
 		//search DONOR
-		else
-			return 	"WHERE lower(" + Global.COL_TITLE + ") LIKE '%" + search + "%' OR " +
-					"lower(" + Global.COL_FNAME + ") LIKE '%" + search + "%' OR " +
-					"lower(" + Global.COL_MNAME + ") LIKE '%" + search + "%' OR " +
-					"lower(" + Global.COL_LNAME + ") LIKE '%" + search + "%' OR " +
-					"lower(" + Global.COL_SUFFIX + ") LIKE '%" + search + "%' ";
+		else{
+			//since we're searching for donors, some donors are 'duet' entities
+			// (man and wife contribution).  In these cases, we only want to display the
+			// pair, or duet, rather than each donor individually. We accomplish this
+			// by only grabbing the 'duet' donor IDs and removing the other IDs from the list.
+			// For instance, "Bill & Sally Seidman" is a duet entity and "William/Bill Seidman"
+			// is his own entity.  Rather than display both "Bill & Sally" and "William", we
+			// want to display only "Bill & Sally" by grabbing only the ID of "Bill & Sally" and
+			// excluding the ID of "William"
+			String filter = "WHERE " + Global.COL_DON_ID + " NOT IN " + 
+									"(SELECT " + Global.COL_DUET_ID + 
+									" FROM " + strTable + 
+									" WHERE " + Global.COL_DUET_ID + " IS NOT NULL)";
+			if( search == null )
+				return filter;
+			else
+				return 	filter += 
+						" AND (lower(" + Global.COL_TITLE + ") LIKE '%" + search + "%' OR " +
+						"lower(" + Global.COL_FNAME + ") LIKE '%" + search + "%' OR " +
+						"lower(" + Global.COL_MNAME + ") LIKE '%" + search + "%' OR " +
+						"lower(" + Global.COL_LNAME + ") LIKE '%" + search + "%' OR " +
+						"lower(" + Global.COL_SUFFIX + ") LIKE '%" + search + "%' ) ";
+		}
 	}
 
 	@Override
+	/**	onPostExecute
+	 * 	This is executed only when 'doInBackground' is completed. Dismisses the dialog
+	 * box, sets the ListView adapter to the newly created adapter, and cleans up resources.
+	 * This function is bypassed if the async task is cancelled (onCancelled)
+	 */
 	protected void onPostExecute(Integer result){
 		super.onPostExecute(result);
-
 		vList.setAdapter(lAdapter);
 		vDialog.dismiss();	
 		DirectoryActivity.sInstance.enableInput(true);
@@ -135,6 +177,9 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 	}
 	
 	@Override
+	/**	onCancelled
+	 * 	cleans up resources if this task is halted prematurely
+	 */
 	protected void onCancelled(Integer result){
 		//if this task was cancelled, do not set a new view
 		vDialog.dismiss();
@@ -143,8 +188,17 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		DirectoryActivity.sInstance.resetAsyncTask();
 	}
 
-	//adds a heading view to the list if necessary
-	//returns the current record's type string
+	
+	/**	addListHeading
+	 * @param cursor : list cursor containing the data we're displaying in the listView
+	 * @param adapter : ListView adapter where the heading will be placed along with the List items
+	 * @param previousRecord : String representing the previous record in the list
+	 * @param sortBy : field the list is being sorted by
+	 * @return String representing the current record
+	 * Checks to see if a new heading should be added to the ListView.  It determines this by looking at the
+	 * previous record in the list and by looking at what the list is being sorted by. This function
+	 * supports creating headers for Donor names, building names, and building campuses.
+	 */
 	private String addListHeading(Cursor cursor, DBListAdapter adapter, String previousRecord, String sortBy ){
 
 		//determine current record string
@@ -202,6 +256,15 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		return strThisRecord;
 	}
 
+	/**	addDistanceHeading
+	 * @param adapter : list adapter that holds all items in the list
+	 * @param strThisRecord : string representing this record (distance in miles - 2 decimal places)
+	 * @param previousRecord : string representing the previous record in the list (distance in miles - 2 decimal places)
+	 * @return String representing the current record's heading string (distance in miles - 2 decimal places)
+	 * Determines if a new heading needs to be created in the ListView for displaying this record.  If a new
+	 * heading is needed, it is created and added to the listAdapter. A string representing the current
+	 * record's heading string is returned
+	 */
 	private String addDistanceHeading( DBListAdapter adapter, String strThisRecord, String previousRecord ){
 
 		//determine current record string
@@ -231,13 +294,21 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		return strThisRecord;
 	}
 
+	/**
+	 * @param cMonument : cursor of monument objects to create views for
+	 * @param strSort : field in which the monuments are sorted by
+	 * @return status of the execution process. Can be STATUS_OK, ERR_CANCEL,
+	 * 			ERR_NO_RESULTS, or ERR_GENERAL
+	 * Steps through each record in the list of the cursor and creates a ListItemView for
+	 * each monument.
+	 */
 	private int createMonumentViews(Cursor cMonument, String strSort){
 		int nRecords = cMonument.getCount();
 		String previousRecord = null;
 
 		//go through the list of monuments. Find its donors and images
 		for(int i=0; i<nRecords; i++){
-			if( isCancelled() )
+			if( isCancelled() )		//if the async task has been cancelled, break out
 				return ERR_CANCEL;
 			
 			String strMonumentName = cMonument.getString(0);
@@ -285,13 +356,21 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		return STATUS_OK;
 	}
 
+	/**	createDonorViews
+	 * @param cDonor : cursor pointing to the list of donors to create ListItemViews for
+	 * @param strSort : field by which the donors should be sorted by
+	 * @return status of the execution process. Can be STATUS_OK, ERR_NO_RESULTS,
+	 * 				ERR_CANCELLED, or ERR_GENERAL
+	 * Steps through each record in the list of the cursor and creates a ListItemView for
+	 * each donor.
+	 */
 	private int createDonorViews( Cursor cDonor, String strSort ){
 		int nRecords = cDonor.getCount();
 		String previousRecord = null;
 
 		//go through the list of donors. Find his/her contributions and images
 		for(int i=0; i<nRecords; i++){
-			if( isCancelled() )
+			if( isCancelled() )		//if the async task has been cancelled, break out
 				return ERR_CANCEL;
 			
 			String strDonorName = "";
@@ -359,6 +438,15 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		return STATUS_OK;
 	}
 
+	/**	createMonumentLocationViews
+	 * @param cMonument : cursor containg data for the monuments to display in the list
+	 * @param myLat : user's latitude location
+	 * @param myLong : user's longitude location
+	 * @return status of the execution process. Can be STATUS_OK, ERR_NO_RESULTS,
+	 * 				ERR_CANCELLED, or ERR_GENERAL
+	 * Does the same thing as 'createMonumentViews' except this function creates the views
+	 * in the sorted order of distance from the user to each building
+	 */
 	private int createMonumentLocationViews( Cursor cMonument, double myLat, double myLong ){
 
 		final double EARTH_RADIUS = 3963.16637510;     //radius of the earth in miles
@@ -388,13 +476,14 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			cMonument.moveToNext();
 		}
 		
+		//if the task has been cancelled, break out
 		if( isCancelled() )
 			return ERR_CANCEL;
 
 		DecimalFormat decFormat = new DecimalFormat("#.##");
 		int i=0;
 		for( DistanceRecord thisMonument : sortedRecords ){
-			if( isCancelled() )
+			if( isCancelled() )		//if the task has been cancelled, break out
 				return ERR_CANCEL;
 			
 			cMonument.moveToPosition( thisMonument.getIndex() );
@@ -445,16 +534,32 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 }
 
 
+/**	DistanceRecord
+ * Object that stores a distance of a building to the user and the index the
+ * building is within a cursor.  This object is used to sort building distances
+ * from the user and uses the index to go back through the cursor and grab
+ * the associated building
+ */
 class DistanceRecord implements Comparable<DistanceRecord>
 {
 	private double mDistance;
-	private int mIndex;
+	private int mCursorIndex;
 
-	public DistanceRecord( double distance, int index ){
+	/**	DistanceRecord
+	 * @param distance : distance associated with the building in cursor location 'cursorIndex'
+	 * @param cursorIndex : index of building in a cursor
+	 */
+	public DistanceRecord( double distance, int cursorIndex ){
 		mDistance = distance;
-		mIndex = index;
+		mCursorIndex = cursorIndex;
 	}
 
+	/**	compareTo
+	 * 	@param other : DistanceRecord to compare this DistanceRecord against
+	 * @return -1 if this DistanceRecord holds a smaller distance value than the 'other' DistanceRecord,
+	 * 			0 if the two distances are equal, and
+	 * 			1 if this DistanceRecord holds a larger distance value than the 'other' DistanceRecord
+	 */
 	public int compareTo(DistanceRecord other) {
 		if( mDistance > other.getDistance() )
 			return 1;
@@ -465,5 +570,5 @@ class DistanceRecord implements Comparable<DistanceRecord>
 	}
 
 	public double getDistance(){ return mDistance; }
-	public int getIndex(){ return mIndex; }
+	public int getIndex(){ return mCursorIndex; }
 }
