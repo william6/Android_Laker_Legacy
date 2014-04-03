@@ -1,26 +1,51 @@
 package edu.gvsu.ll;
 
+import java.io.File;
+
+import edu.gvsu.ll.R;
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Context;
+import android.database.Cursor;
 import android.os.Handler;
 import android.os.Message;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 public class SlideShowActivity extends Activity {
 
+	private DatabaseManager dbm;
+	int imgid[];
 	int n = 10;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.slideshow);
         this.imageView=(ImageView)this.findViewById(R.id.imageView);
+        
+		dbm = new DatabaseManager(this, new File( this.getFilesDir().getPath() +  "/Laker Legacies.sqlite"), 1);
+		
+		String filename;
+	    String query =	"SELECT filename FROM DON_IMG";
+		Cursor donorCursor = dbm.query(query);
+		imgid = new int [donorCursor.getCount()];
+
+		donorCursor.moveToFirst();
+		
+		for (int i = 0; i < donorCursor.getCount(); i++){
+			filename = donorCursor.getString(0);
+			imgid[i] = getResources().getIdentifier( filename, "drawable", "edu.gvsu.ll");
+			donorCursor.moveToNext();
+		}
+
         updateUI();
 	}
 	
+	
+
+
+		int i=0;
 	    private ImageView imageView;
-	    int i=0;
-	    int imgid[]={R.drawable.alumni_house,R.drawable.arboretum,R.drawable.cook_devos,};
 	    RefreshHandler refreshHandler=new RefreshHandler();
 	    
 	    class RefreshHandler extends Handler{
@@ -35,17 +60,16 @@ public class SlideShowActivity extends Activity {
 	        }
 	    };
 	    public void updateUI(){
-	        int currentInt=n+10;
-	        if(currentInt<=300){
-	            refreshHandler.sleep(2000);
+	        int currentInt=n+1;
+	        if(currentInt<=10000){
+	            refreshHandler.sleep(7500);
 	            n = currentInt;
 	            if(i<imgid.length){
 	                imageView.setImageResource(imgid[i]);
-	                
-	                // imageView.setPadding(left, top, right, bottom);
 	                i++;
-	            }else
+	            }else{
 	            	i = 0;
+	            }
 	        }
 	    }
 
