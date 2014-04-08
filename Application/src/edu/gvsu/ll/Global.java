@@ -17,6 +17,7 @@ public class Global
 	public static final String TBL_DONOR	 = "DONOR";		//donors table
 	public static final String TBL_DON_IMG	 = "DON_IMG";	//donor image table
 	public static final String TBL_MON_DON	 = "MON_DON";	//monument donors table
+	public static final String TBL_FACTS	 = "FACTOID";	//table of GV facts
 	
 	//--	Database column names	--//
 	public static final String COL_MON_NAME	 = "name";		//name of monument
@@ -34,6 +35,8 @@ public class Global
 	public static final String COL_DON_ID	 = "donid";		//donor id
 	public static final String COL_DUET_ID	 = "duetid";	//id of duet donor (donor paired with another)
 	public static final String COL_IMG_ID	 = "imgid";		//image id
+	public static final String COL_FACT_ID	 = "factid";	//fact id
+	public static final String COL_FACT		 = "fact";		//fact string
 	
 	//--	defined values	--//
 	public static final long 	N_BIO_MAX 	= 32*1024;		//maximum text string for donor's bio (in KB)

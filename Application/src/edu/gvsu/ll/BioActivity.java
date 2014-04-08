@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 /**	BioActivity
  * 	Creates a ViewPager that is able to cycle a set of BioViews. This class sets
@@ -39,6 +40,7 @@ public class BioActivity extends FragmentActivity {
 	
 	private ImageView [] 	mPageIndicators;		//set of GUI elements to represent the active and inactive pages
 	private ImageView 		mVLeftPage, mVRightPage;//GUI elements to represent the left and right page buttons
+	private TextView		mVPageNum;				//page numbers index
 	
 	private Bitmap			mImgDimPage, mImgCurrPage;	//Image objects of an inactive page and active page, respectively
 	private Bitmap			mImgDimLeft, mImgLeft, mImgDimRight, mImgRight;	//Image objects of the page buttons and their dimmed versions
@@ -82,6 +84,7 @@ public class BioActivity extends FragmentActivity {
         mImgRight 		= loadImage("page_right");
 		
         //set the correct page images
+        mVPageNum = (TextView) findViewById(R.id.PAG_txtPageNum);
         setPagerButtons(mCurrPage);
        
         //create and set the GUI page indicator images (active and inactive page indicators)
@@ -131,7 +134,6 @@ public class BioActivity extends FragmentActivity {
 	public void setPagerButtons(int pageIndex){
 		
 		// check endpoints. If the currently displayed page is an endpoint, dim the pager next/previous button
-		
 		// check first page endpoint
 		if( pageIndex == 0){
 			mVLeftPage.setImageBitmap(mImgDimLeft);
@@ -151,6 +153,9 @@ public class BioActivity extends FragmentActivity {
 			mVRightPage.setImageBitmap(mImgRight);
 			mVRightPage.setClickable(true);
 		}
+		
+		//set page text
+		mVPageNum.setText("Page " + (pageIndex+1) + "/" + mNumPages);
 	}
 	
 	/**	loadImage
