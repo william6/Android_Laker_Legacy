@@ -30,7 +30,8 @@ public class MapActivity extends FragmentActivity   {
    static final LatLng GVSUALL = new LatLng(42.966746, -85.886718);
    private GoogleMap map;
    Button menu_button;
-		  
+   boolean traffic_on = false;
+   
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,16 +49,29 @@ public class MapActivity extends FragmentActivity   {
              popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {  
               public boolean onMenuItemClick(MenuItem item) {  
             	  
-            	if (item.getOrder() == 2)  
-            	{
+            	
+            	  
+            	  //Menu Option Handler
+            	if(item.getOrder() == 1) //standard mode
+            		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+            	if (item.getOrder() == 2)  //hybrid
             		map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-            	}
-            	if(item.getOrder() == 3)
+            	if(/*(traffic_on == false) && (*/item.getOrder() == 3)//)show traffic
             	{
             		map.setTrafficEnabled(true);
+            		traffic_on = true;
             	}
-            	if(item.getOrder() == 6)
+//            	if((traffic_on == true) && (item.getOrder() == 3))	
+//            	{
+//            		map.setTrafficEnabled(false);
+//            		traffic_on = false;
+//            	}
+            	if(item.getOrder() == 4)//satellite
             		map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            	if(item.getOrder() == 5) //go to allendale
+            		map.moveCamera(CameraUpdateFactory.newLatLngZoom(GVSUALL, 15));
+            	if(item.getOrder() == 6) //go to PEW
+            		map.moveCamera(CameraUpdateFactory.newLatLngZoom(GVSUPEW,15));
             		
             	  
 //               Toast.makeText(MapActivity.this,"You Clicked : " + item.getTitle(),Toast.LENGTH_SHORT).show();  
@@ -139,8 +153,8 @@ public class MapActivity extends FragmentActivity   {
          * 
          */
         
-        //Zooms to GVSU PEW on start
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(GVSUPEW, 15));
+        //Zooms to GVSU ALL on start
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(GVSUALL, 15));
     }
 
 	

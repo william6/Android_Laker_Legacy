@@ -12,12 +12,12 @@
         android:title="Show Traffic"/>
     <item
         android:id="@+id/menu_allendale"
-        android:orderInCategory="4"
+        android:orderInCategory="5"
         android:showAsAction="never"
         android:title="Go to Allendale"/>
     <item
         android:id="@+id/menu_pewGR"
-        android:orderInCategory="5"
+        android:orderInCategory="6"
         android:showAsAction="never"
         android:title="Go to Pew Campus"/>
     <item
@@ -27,7 +27,7 @@
         android:title="Map View"/>
     <item
         android:id="@+id/menu_satview"
-        android:orderInCategory="6"
+        android:orderInCategory="4"
         android:showAsAction="never"
         android:title="Satellite View"/>
 
