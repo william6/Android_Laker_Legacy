@@ -1,0 +1,29 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+ 
+    <item
+        android:id="@+id/menu_sethybrid"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="Hybrid Mode"/>
+    <item
+        android:id="@+id/menu_showtraffic"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="Show Traffic"/>
+    <item
+        android:id="@+id/menu_allendale"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="Go to Allendale"/>
+    <item
+        android:id="@+id/menu_pewGR"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="Go to Pew Campus"/>
+    <item
+        android:id="@+id/menu_mapview"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="Map View"/>
+
+</menu>

@@ -2,7 +2,6 @@ package edu.gvsu.ll;
 
 import java.io.File;
 
-import edu.gvsu.ll.R;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
