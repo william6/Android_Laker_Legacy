@@ -47,7 +47,20 @@ public class MapActivity extends FragmentActivity   {
              //registering popup with OnMenuItemClickListener  
              popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {  
               public boolean onMenuItemClick(MenuItem item) {  
-               Toast.makeText(MapActivity.this,"You Clicked : " + item.getTitle(),Toast.LENGTH_SHORT).show();  
+            	  
+            	if (item.getOrder() == 2)  
+            	{
+            		map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+            	}
+            	if(item.getOrder() == 3)
+            	{
+            		map.setTrafficEnabled(true);
+            	}
+            	if(item.getOrder() == 6)
+            		map.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+            		
+            	  
+//               Toast.makeText(MapActivity.this,"You Clicked : " + item.getTitle(),Toast.LENGTH_SHORT).show();  
                return true;  
               }  
              });  

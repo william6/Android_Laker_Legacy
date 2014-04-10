@@ -2,28 +2,33 @@
  
     <item
         android:id="@+id/menu_sethybrid"
-        android:orderInCategory="100"
+        android:orderInCategory="2"
         android:showAsAction="never"
         android:title="Hybrid Mode"/>
     <item
         android:id="@+id/menu_showtraffic"
-        android:orderInCategory="100"
+        android:orderInCategory="3"
         android:showAsAction="never"
         android:title="Show Traffic"/>
     <item
         android:id="@+id/menu_allendale"
-        android:orderInCategory="100"
+        android:orderInCategory="4"
         android:showAsAction="never"
         android:title="Go to Allendale"/>
     <item
         android:id="@+id/menu_pewGR"
-        android:orderInCategory="100"
+        android:orderInCategory="5"
         android:showAsAction="never"
         android:title="Go to Pew Campus"/>
     <item
         android:id="@+id/menu_mapview"
-        android:orderInCategory="100"
+        android:orderInCategory="1"
         android:showAsAction="never"
         android:title="Map View"/>
+    <item
+        android:id="@+id/menu_satview"
+        android:orderInCategory="6"
+        android:showAsAction="never"
+        android:title="Satellite View"/>
 
 </menu>
