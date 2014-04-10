@@ -49,7 +49,12 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		vDialog = new ProgressDialog(DirectoryActivity.sInstance);
 		vDialog.setCanceledOnTouchOutside(false);
 		vDialog.setTitle("Loading data");
-		vDialog.setMessage("Please wait...");
+		//vDialog.setMessage("Please wait...");
+		Cursor facts = dbm.query("SELECT " + Global.COL_FACT + " FROM " + Global.TBL_FACTS);
+		facts.moveToFirst();
+		int rIndex = new Random().nextInt(facts.getCount());
+		facts.moveToPosition(rIndex);
+		vDialog.setMessage(facts.getString(0));
 		vDialog.show();
 	}
 

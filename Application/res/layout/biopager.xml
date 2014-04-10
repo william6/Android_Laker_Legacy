@@ -40,6 +40,16 @@
 			android:layout_toRightOf="@id/PAG_imgLeftPage"
 			android:layout_toLeftOf="@id/PAG_imgRightPage" >
 		</LinearLayout>
+		
+		<TextView 
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/PAG_txtPageNum"
+			android:typeface="serif"
+			android:textSize="12sp"
+			android:textColor="#FF000000"
+			android:layout_centerHorizontal="true"
+			android:layout_below="@id/PAG_lPages" />
 	</RelativeLayout>
 	
 	<!-- insert pager to fill the rest of the screen -->
