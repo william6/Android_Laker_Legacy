@@ -374,6 +374,7 @@ containing a value of this type.
         public static final int menu_button=0x7f05001f;
         public static final int menu_mapview=0x7f050028;
         public static final int menu_pewGR=0x7f050027;
+        public static final int menu_satview=0x7f050029;
         public static final int menu_sethybrid=0x7f050024;
         public static final int menu_showtraffic=0x7f050025;
         public static final int none=0x7f050000;
