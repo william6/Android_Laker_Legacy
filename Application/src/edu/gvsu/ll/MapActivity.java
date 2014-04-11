@@ -16,6 +16,7 @@ import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -36,6 +37,8 @@ public class MapActivity extends FragmentActivity   {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map);
+        
+        CheckEnableGPS();
         
         menu_button = (Button) findViewById(R.id.menu_button);
         menu_button.setOnClickListener(new OnClickListener() {
@@ -72,18 +75,13 @@ public class MapActivity extends FragmentActivity   {
             		map.moveCamera(CameraUpdateFactory.newLatLngZoom(GVSUALL, 15));
             	if(item.getOrder() == 6) //go to PEW
             		map.moveCamera(CameraUpdateFactory.newLatLngZoom(GVSUPEW,15));
-            		
-            	  
-//               Toast.makeText(MapActivity.this,"You Clicked : " + item.getTitle(),Toast.LENGTH_SHORT).show();  
+            		  
                return true;  
               }  
              });  
-
              popup.show();//showing popup menu  
             }  
-           });//closing the setOnClickListener method   
-    
-    
+           });   
     
         //index to move through the items of the database
         int i = 0;
@@ -173,4 +171,20 @@ public class MapActivity extends FragmentActivity   {
         }
         return true; 
     }
+    
+    private void CheckEnableGPS(){
+        String provider = Settings.Secure.getString(getContentResolver(),
+          Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            if(!provider.contains("gps"))
+            {
+            Toast.makeText(MapActivity.this, "Please Enable GPS",
+            Toast.LENGTH_LONG).show();
+            //TODO
+            //Add a popup window to ask if they want to enable GPS, if so, send them
+            //to the code below. If not, do nothing.
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+               startActivity(intent);
+           }
+
+       }
 }
