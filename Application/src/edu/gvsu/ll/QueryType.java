@@ -90,6 +90,12 @@ public class QueryType
 					!this.getSearchField().equalsIgnoreCase( other.getSearchField() ) )
 				return false;
 		}
+		
+		//if we're querying for building distances, we want to continue with the query
+		//so we return false
+		if( this.getSortField().equalsIgnoreCase("Distance from me") )
+			return false;
+		
 		return true;	//otherwise, return true
 	}
 }

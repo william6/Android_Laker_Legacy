@@ -7,6 +7,10 @@ import java.util.TimerTask;
 import android.app.Activity;
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -22,11 +26,12 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-public class DirectoryActivity extends Activity
+public class DirectoryActivity extends Activity implements LocationListener
 {
 	public static DirectoryActivity sInstance;
 
@@ -39,6 +44,8 @@ public class DirectoryActivity extends Activity
 	private DirectoryInit 				mAsyncTask;					//null if no async task exists
 	private boolean 					mEnableInput;
 	private Timer						mSearchTimeout;
+	private LocationManager				mLocationManager;
+	private Location					mMyLocation;
 	
 	private final long lSearchTimeout = 1500;		//1.5 second timeout
 //	private final short GPS_ENABLE_REQUEST = 101;
@@ -48,6 +55,7 @@ public class DirectoryActivity extends Activity
 		mAsyncTask = null;
 		mEnableInput = true;
 		mSearchTimeout = null;
+		mLocationManager = null;
 	}
 	
 	@Override
@@ -68,7 +76,18 @@ public class DirectoryActivity extends Activity
         								QueryType.STR_LIST_MONUMENT,
         								QueryType.STR_SORT_MON_NAME,
         								null);
-        initDirectory(query);
+        initDirectory(query, true);
+        
+//        if (location != null) {
+//            System.out.println("Provider " + provider + " has been selected.");
+//            int lat = (int) (location.getLatitude());
+//            int lng = (int) (location.getLongitude());
+//            latituteField.setText(String.valueOf(lat));
+//            longitudeField.setText(String.valueOf(lng));
+//        } else {
+//            latituteField.setText("Provider not available");
+//            longitudeField.setText("Provider not available");
+//        }
 	}
 	
 	/**	onSearchSelected
@@ -78,7 +97,7 @@ public class DirectoryActivity extends Activity
 	 */
 	public void onSearchSelected(View view){
         hideKeyboard(view);
-		initDirectory( createQuery(getSearch()) );
+		initDirectory( createQuery(getSearch()), true );
 	}
 	
 	/**	hideKeyboard
@@ -102,7 +121,7 @@ public class DirectoryActivity extends Activity
 	 * through the async task, DirectoryInit.  When this task completes, the Directory
 	 * view will be updated accordingly
 	 */
-	public void initDirectory( QueryType queryDescription ){
+	public void initDirectory( QueryType queryDescription, boolean bDisplayDialog ){
 		if( mEnableInput ){			
 			//only change the view if the new query differs from the current query
 			if( mCurrQuery == null || !mCurrQuery.equals(queryDescription) ){
@@ -111,7 +130,7 @@ public class DirectoryActivity extends Activity
 				//if another task exists, halt it
 				if( mAsyncTask != null )
 					mAsyncTask.cancel(true);
-				mAsyncTask = new DirectoryInit( this, mListView );
+				mAsyncTask = new DirectoryInit( this, mListView, mMyLocation, bDisplayDialog );
 				mAsyncTask.execute(queryDescription);
 				mEnableInput = false;
 			}
@@ -159,7 +178,7 @@ public class DirectoryActivity extends Activity
 					public void run() {
 						DirectoryActivity.sInstance.runOnUiThread(new Runnable(){
 							public void run() {
-								initDirectory( createQuery(getSearch()) );
+								initDirectory( createQuery(getSearch()), true );
 							}
 						});
 					}
@@ -225,7 +244,7 @@ public class DirectoryActivity extends Activity
 					mAdapList.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);	//specify layout
 					mSpinSort.setAdapter(mAdapList);
 				}
-				initDirectory( createQuery( getSearch() ) );
+				initDirectory( createQuery( getSearch() ), true );
 			}
 			public void onNothingSelected(AdapterView<?> arg0) { }
 		};
@@ -293,9 +312,31 @@ public class DirectoryActivity extends Activity
 												Global.COL_MNAME, 
 												Global.COL_LNAME, 
 												Global.COL_SUFFIX,
-												Global.COL_DON_ID };
+												Global.COL_DON_ID,
+												Global.COL_DUET_ID };
 			}
 		}
+		
+		//enable GPS location updates if we're sorting buildings by distance
+		if( listBy == 0 && sortBy == 2){
+			if( mLocationManager == null )
+		       	mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+			
+			Criteria criteria = new Criteria();
+	        String provider = mLocationManager.getBestProvider(criteria, true);
+	        
+	        if( provider != null ){
+	        	mMyLocation = mLocationManager.getLastKnownLocation(provider);
+	        	mLocationManager.requestLocationUpdates(provider, 500, 5, this);
+	        }
+	        else
+	        	Toast.makeText(this, "Please enable GPS", Toast.LENGTH_LONG).show();
+	        
+		}
+		//disable GPS location updates
+		else if (mLocationManager != null )
+			mLocationManager.removeUpdates(this);
+		
 		return new QueryType( selectCols, strTable, strSort, strSearch );
 	}
 	
@@ -308,6 +349,29 @@ public class DirectoryActivity extends Activity
 	public void enableInput(boolean enable){
 		mEnableInput = enable;
 	}
+
+	public void onLocationChanged(Location location) {
+		//this should only get called if we're listing buildings by distance
+		//if we're sorting by distance from user, re-update query
+		mMyLocation = location;
+		initDirectory( createQuery( getSearch() ), false );
+	}
+
+	public void onProviderDisabled(String provider) {
+		//if we lose gps, notify user with toast
+		Toast.makeText(this, "GPS disabled", Toast.LENGTH_SHORT).show();
+		if( mAsyncTask != null )
+			mAsyncTask.cancel(true);
+	}
+
+	public void onProviderEnabled(String provider) {
+		//re-enable sorting distance from user
+		Toast.makeText(this, "GPS enabled", Toast.LENGTH_SHORT).show();
+        mMyLocation = mLocationManager.getLastKnownLocation(provider);
+        initDirectory( createQuery( getSearch() ), true );
+	}
+
+	public void onStatusChanged(String provider, int status, Bundle extras) {	}
 }
 
 
@@ -318,7 +382,7 @@ public class DirectoryActivity extends Activity
  * 	"loadDataFromCursor" function is called. After this is invoked, the
  * 	parent view must be refreshed to show the new results.
  */
-class DBListAdapter extends BaseAdapter 		//TODO? - fastscroll? -- implements SectionIndexer
+class DBListAdapter extends BaseAdapter
 {
 	private ArrayList<View> listItems;
 	private int nMaxItems;

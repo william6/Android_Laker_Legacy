@@ -209,12 +209,18 @@ class BioActivityDesc implements Serializable
 {
 	private static final long serialVersionUID = Global.SERIAL_NUM;
 	private int [] mnDonorIDs;
+	private Global.eVIEWTYPE meFromViewType;
 	
-	public BioActivityDesc(int [] nDonorIDs){
+	public BioActivityDesc(Global.eVIEWTYPE type, int [] nDonorIDs){
 		mnDonorIDs = nDonorIDs;
+		meFromViewType = type;
 	}
 	
 	public int [] getDonorIDs(){
 		return mnDonorIDs;
+	}
+	
+	public Global.eVIEWTYPE getFromViewType(){
+		return meFromViewType;
 	}
 }

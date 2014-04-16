@@ -1,7 +1,10 @@
 package edu.gvsu.ll;
 
+import java.util.ArrayList;
 import java.util.Random;
+import java.util.TreeMap;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.support.v4.view.ViewPager;
@@ -60,7 +63,8 @@ public class BioInit extends AsyncTask< BioActivityDesc, Void, Integer >
 		if( cDon.getCount() != nDonIDs.length )
 			throw new RuntimeException ("ERR: donor cursor number and id number is different");
 		
-		//for each donor grab an image of them, piece together their name, throw in a bio, and add to adapter
+		//for each donor grab an image assoc w/donid, piece together name,
+		// grab contribution info, throw in a bio, and add to adapter
 		for( int i = 0; i<cDon.getCount(); i++ ){
 			//extract donor name (columns 1-5)
 			String strDonor = "";
@@ -71,35 +75,65 @@ public class BioInit extends AsyncTask< BioActivityDesc, Void, Integer >
 			//extract bio
 			String strBio = cDon.getString(6);
 			
-			//find donor image
-			String strFilename = "";
+			//find donor images
 			Cursor cDonImg = Global.gDBM.query(
 							"SELECT I." + Global.COL_FILENAME + " " +
 							"FROM " + Global.TBL_DON_IMG + " I, " + Global.TBL_DONOR + " D " +
 							"WHERE D." + Global.COL_DON_ID + " = " + cDon.getInt(0) + " AND " + 
 							"D." + Global.COL_DON_ID + " = I." + Global.COL_DON_ID );
 			cDonImg.moveToFirst();
+			boolean bFoundDonorImage = (cDonImg.getCount() == 0) ? false : true;
 			
-			//if no images of donor, grab image of building
-			if( cDonImg.getCount() == 0 ){
-				cDonImg = Global.gDBM.query(
-						"SELECT MI." + Global.COL_FILENAME + " " + 
+			//grab all monuments and their image filenames
+			TreeMap<String,String> mapMonuments = new TreeMap<String,String>();
+			query =		"SELECT MD." + Global.COL_MON_NAME + ", MI." + Global.COL_FILENAME + " " +
 						"FROM " + Global.TBL_MON_IMG + " MI, " + Global.TBL_MON_DON + " MD " +
 						"WHERE MI." + Global.COL_MON_NAME + " = MD." + Global.COL_MON_NAME + " AND " +
-								"MD." + Global.COL_DON_ID + " = " + cDon.getInt(0) );	
-				cDonImg.moveToFirst();
+								"( MD." + Global.COL_DON_ID + " = " + cDon.getInt(0);
+			
+			//if we're listing by donor, show all contributions - joint and and single
+			if( params[0].getFromViewType() == Global.eVIEWTYPE.DONOR && !cDon.isNull(7) )
+				query += " OR MD." + Global.COL_DON_ID + " = " + cDon.getInt(7) + " )";
+			
+			//if we're listing by buiding, show all individual contributions
+			else if( params[0].getFromViewType() == Global.eVIEWTYPE.BUILDING ){
+				Cursor cursor = Global.gDBM.query(	
+									"SELECT " + Global.COL_DON_ID + 
+									" FROM " + Global.TBL_DONOR + 
+									" WHERE " + Global.COL_DUET_ID + " = " + cDon.getInt(0) );
+				if( cursor.getCount() != 0 )
+					while(cursor.moveToNext())
+						query += " OR MD." + Global.COL_DON_ID + " = " + cursor.getInt(0);
+				query += " )";
 			}
-
+			else
+				query += " )";
+			Cursor cMon = Global.gDBM.query(query);
+			
+			//create the set of monuments
+			while(cMon.moveToNext())
+				mapMonuments.put(cMon.getString(0), cMon.getString(1));
+			
 			//grab a random image of this donor
-			int imgIndex = 0;
-			if( cDonImg.getCount() > 1 ){
-				imgIndex = new Random().nextInt(cDonImg.getCount());
+			String strDonorFilename = "";
+			if(bFoundDonorImage){
+				int imgIndex = 0;
+				if( cDonImg.getCount() > 1 )
+					imgIndex = new Random().nextInt(cDonImg.getCount());
+				cDonImg.move(imgIndex);
+				strDonorFilename = cDonImg.getString(0);
 			}
-			cDonImg.move(imgIndex);
-			strFilename = cDonImg.getString(0);
+			else{
+				//grab image of contributed building
+				int imgIndex = 0;
+				if(cMon.getCount() > 1)
+					imgIndex = new Random().nextInt(cMon.getCount());
+				cMon.moveToPosition(imgIndex);
+				strDonorFilename = cMon.getString(1);
+			}
 			
 			//create BioView of donor and add to the pager adapter
-			mAdapter.addItem( new BioView( strDonor, strBio, strFilename ), i);
+			mAdapter.addItem( new BioView( strDonor, strBio, strDonorFilename, mapMonuments ), i);
 			cDon.moveToNext();
 		}
 		return STATUS_OK;

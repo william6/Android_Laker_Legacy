@@ -18,7 +18,7 @@ public class ListItemView extends RelativeLayout
 {
 	//--	private class member variables	--//
 	private int [] mNDonorIDs;
-	
+	private Global.eVIEWTYPE meViewType;
 	
 	/**	ListItemView
 	 * @param context : context of the ListItem
@@ -32,17 +32,18 @@ public class ListItemView extends RelativeLayout
 	 * To the right side of the image is displayed the title of the list item, followed
 	 * by subtext. This view loads the given image from app resources and scales it to size.
 	 */
-	public ListItemView( Context context, String strTitle, String [] strSubtitles, String strFilename, 
-						 int [] nDonorIDs, int index ) {
+	public ListItemView( Context context, Global.eVIEWTYPE eViewType, String strTitle,
+			String [] strSubtitles, String strFilename, int [] nDonorIDs, int index ) {
 		super(context);
 		mNDonorIDs = nDonorIDs;
+		meViewType = eViewType;
 		
 		//inflate custom listitemview.xml
 		View.inflate(context, R.layout.listitem, this);
 		this.setOnClickListener(new OnClickListener(){
 			public void onClick(View v) {
 				Intent intent = new Intent(DirectoryActivity.sInstance, BioActivity.class);
-				intent.putExtra(Global.MSG_DONORS, new BioActivityDesc( mNDonorIDs ) );
+				intent.putExtra(Global.MSG_DONORS, new BioActivityDesc( meViewType, mNDonorIDs ) );
 				DirectoryActivity.sInstance.startActivity(intent);
 			}
 		});
@@ -74,6 +75,13 @@ public class ListItemView extends RelativeLayout
 			this.setBackgroundColor( Color.argb(255, 245, 228, 156 ) );
 		else
 			this.setBackgroundColor( Color.argb( 255, 250, 240, 201 ));
+	}
+	
+	public ListItemView( Context context ){
+		super(context);
+		View.inflate(context, R.layout.listitem, this);
+		this.setVisibility(View.GONE);
+		this.setClickable(false);
 	}
 
 	

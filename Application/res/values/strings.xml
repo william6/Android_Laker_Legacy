@@ -2,7 +2,7 @@
 <resources>
 
 	<string name="hello">Hello World, Android_Laker_LegacyActivity!</string>
-	<string name="app_name">Laker Legacies</string>
+	<string name="app_name">GVSU Laker Legacies</string>
 	
 	<string-array name="SPIN_listType" >
 		<item>Building</item>

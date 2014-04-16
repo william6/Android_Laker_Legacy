@@ -8,6 +8,7 @@ import java.util.TreeSet;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.widget.LinearLayout;
@@ -21,22 +22,27 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 	private final int ERR_NO_RESULTS 	= 1;		// no results found
 	private final int ERR_CANCEL		= 2;		//task was cancelled and halted
 	private final int ERR_GENERAL 		= 3;		// some error occurred
+	private final int ERR_NO_LOCATION	= 4;		// we do not have a last known location
 	
 	//--	class member variables	--//
-	private Context context;
-	private ListView vList;
+	private Context 		context;
+	private ListView 		vList;
 	private DatabaseManager dbm;
-	private DBListAdapter lAdapter;
-	private ProgressDialog vDialog;
+	private DBListAdapter 	lAdapter;
+	private ProgressDialog 	vDialog;
+	private boolean			bShowDialog;
+	private Location		lastKnownLocation;
 
 	/**	DirectoryInit
 	 * @param context : context of the Directory
 	 * @param vList : ListView to display all of the ListItemViews created
 	 */
-	public DirectoryInit(Context context, ListView vList ){
+	public DirectoryInit(Context context, ListView vList, Location lastKnownLocation, boolean bShowDialog ){
 		this.context = context;
 		this.vList = vList;
 		this.dbm = Global.gDBM;
+		this.bShowDialog = bShowDialog;
+		this.lastKnownLocation = lastKnownLocation;
 	}
 
 	@Override
@@ -46,16 +52,17 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 	 */
 	protected void onPreExecute(){
 		super.onPreExecute();
-		vDialog = new ProgressDialog(DirectoryActivity.sInstance);
-		vDialog.setCanceledOnTouchOutside(false);
-		vDialog.setTitle("Loading data");
-		//vDialog.setMessage("Please wait...");
-		Cursor facts = dbm.query("SELECT " + Global.COL_FACT + " FROM " + Global.TBL_FACTS);
-		facts.moveToFirst();
-		int rIndex = new Random().nextInt(facts.getCount());
-		facts.moveToPosition(rIndex);
-		vDialog.setMessage(facts.getString(0));
-		vDialog.show();
+		if( bShowDialog ){
+			vDialog = new ProgressDialog(DirectoryActivity.sInstance);
+			vDialog.setCanceledOnTouchOutside(false);
+			vDialog.setTitle("Loading data");
+			Cursor facts = dbm.query("SELECT " + Global.COL_FACT + " FROM " + Global.TBL_FACTS);
+			facts.moveToFirst();
+			int rIndex = new Random().nextInt(facts.getCount());
+			facts.moveToPosition(rIndex);
+			vDialog.setMessage(facts.getString(0));
+			vDialog.show();
+		}
 	}
 
 	@Override
@@ -106,8 +113,13 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			if( strTable.equalsIgnoreCase(Global.TBL_MONUMENT) ){
 				//check if we're sorting by distance
 				if( sortBy.compareTo(QueryType.STR_SORT_DISTANCE) == 0 ){
-					//TODO -- get user location
-					status = createMonumentLocationViews( listCursor, 42.963411, -85.888692);
+					if( lastKnownLocation != null )
+						status = createMonumentLocationViews( 
+								listCursor, lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+					else{
+						lAdapter.addItem(new ListItemView( context ));	//create blank item
+						status = ERR_NO_LOCATION;
+					}
 				}
 				else
 					status = createMonumentViews( listCursor, sortBy );
@@ -173,11 +185,16 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 	 */
 	protected void onPostExecute(Integer result){
 		super.onPostExecute(result);
-		vList.setAdapter(lAdapter);
-		vDialog.dismiss();	
+		if(bShowDialog)
+			vDialog.dismiss();	
+		
 		DirectoryActivity.sInstance.enableInput(true);
+		
 		if( result == ERR_NO_RESULTS )
 			Toast.makeText(DirectoryActivity.sInstance, "No results found.", Toast.LENGTH_LONG).show();
+		else
+			vList.setAdapter(lAdapter);
+		
 		DirectoryActivity.sInstance.resetAsyncTask();
 	}
 	
@@ -187,7 +204,8 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 	 */
 	protected void onCancelled(Integer result){
 		//if this task was cancelled, do not set a new view
-		vDialog.dismiss();
+		if(bShowDialog)
+			vDialog.dismiss();
 		DirectoryActivity.sInstance.enableInput(true);
 		super.onCancelled(result);
 		DirectoryActivity.sInstance.resetAsyncTask();
@@ -355,7 +373,8 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			}
 
 			previousRecord = addListHeading( cMonument, lAdapter, previousRecord, strSort );
-			lAdapter.addItem( new ListItemView(context, strMonumentName, strDonors, filename, nDonors, i) );
+			lAdapter.addItem( new ListItemView(
+					context, Global.eVIEWTYPE.BUILDING, strMonumentName, strDonors, filename, nDonors, i) );
 			cMonument.moveToNext();
 		}
 		return STATUS_OK;
@@ -383,16 +402,19 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 				strDonorName += cDonor.getString(j) + " ";
 			strDonorName = strDonorName.replaceAll("  ", " ").trim();			
 
-			//find all monuments associated with this donor
-			Cursor cMon = dbm.query(
-							"SELECT " + Global.COL_MON_NAME + " " +
+			//find all monuments associated with this donor and his/her duet (if applicable)
+			String query = 	"SELECT " + Global.COL_MON_NAME + " " +
 							"FROM " + Global.TBL_MON_DON + " " +
-							"WHERE " + Global.COL_DON_ID + " = " + cDonor.getInt(5) + " " +
-							"ORDER BY " + Global.COL_MON_NAME );
+							"WHERE " + Global.COL_DON_ID + " = " + cDonor.getInt(5) + " ";
+			if( !cDonor.isNull(6) )
+				query += 		"OR " + Global.COL_DON_ID + " = " + cDonor.getInt(6) + " ";
+			
+			query += 		"ORDER BY " + Global.COL_MON_NAME;
+			Cursor cMon = Global.gDBM.query(query);
 			cMon.moveToFirst();
 			String [] strMonuments = new String [cMon.getCount()];
 			
-			//TODO -- donor in database has no associated monument (Alexander Calder)
+			//donor in database has no associated monument (this shouldn't happen ever)
 			if( strMonuments.length == 0){
 				cDonor.moveToNext();
 				continue;
@@ -422,7 +444,7 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 							"WHERE " + Global.COL_MON_NAME + " = '" + strMonuments[rand] + "' ");
 				cDonImg.moveToFirst();
 				
-				//TODO?? no image of donor and no image of building donor contributed toward
+				//no image of donor and no image of building donor contributed toward (this should never happen)
 				if(cDonImg.getCount() == 0){
 					cDonor.moveToNext();
 					continue;
@@ -436,7 +458,7 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			}
 			cDonImg.move(imgIndex);
 			previousRecord = addListHeading(cDonor, lAdapter, previousRecord, strSort);
-			lAdapter.addItem( new ListItemView( context, strDonorName, strMonuments, 
+			lAdapter.addItem( new ListItemView( context, Global.eVIEWTYPE.DONOR, strDonorName, strMonuments, 
 					cDonImg.getString(0), new int[] { cDonor.getInt(5) }, i) );
 			cDonor.moveToNext();
 		}
@@ -531,7 +553,8 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			}
 
 			previousRecord = addDistanceHeading( lAdapter, strDistance, previousRecord );
-			lAdapter.addItem( new ListItemView( context, strMonumentName, strDonors, filename, nDonors, i++ ) );
+			lAdapter.addItem( new ListItemView( 
+					context, Global.eVIEWTYPE.BUILDING, strMonumentName, strDonors, filename, nDonors, i++ ) );
 			cMonument.moveToNext();
 		}
 		return STATUS_OK;

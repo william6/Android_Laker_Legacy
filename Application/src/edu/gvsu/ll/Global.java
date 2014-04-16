@@ -10,6 +10,7 @@ public class Global
 	//--	Application values	--//
 	public static final String 	PACKAGE 	= "edu.gvsu.ll";
 	public static final String 	MSG_DONORS 	= "edu.gvsu.ll.donors";
+	public static final String MSG_BUILDING = "edu.gvsu.ll.building";
 	
 	//--	Database table names	--//
 	public static final String TBL_MONUMENT  = "MONUMENT";	//monuments table
@@ -37,6 +38,9 @@ public class Global
 	public static final String COL_IMG_ID	 = "imgid";		//image id
 	public static final String COL_FACT_ID	 = "factid";	//fact id
 	public static final String COL_FACT		 = "fact";		//fact string
+	
+	//--	enum	--//
+	public static enum eVIEWTYPE { DONOR, BUILDING };
 	
 	//--	defined values	--//
 	public static final long 	N_BIO_MAX 	= 32*1024;		//maximum text string for donor's bio (in KB)
