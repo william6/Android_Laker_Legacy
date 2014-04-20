@@ -419,7 +419,7 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			cMon.moveToFirst();
 			String [] strMonuments = new String [cMon.getCount()];
 			
-			//donor in database has no associated monument (this shouldn't happen ever)
+			//donor in database has no associated monument (NEEDED! - T-Haas added for slideshow image 2014)
 			if( strMonuments.length == 0){
 				cDonor.moveToNext();
 				continue;
