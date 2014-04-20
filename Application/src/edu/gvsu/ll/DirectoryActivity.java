@@ -324,13 +324,17 @@ public class DirectoryActivity extends Activity implements LocationListener, Gps
 			if( mLocationManager == null )
 		       	mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 			
-			Criteria criteria = new Criteria();
-	        String provider = mLocationManager.getBestProvider(criteria, true);
+			boolean bGPSEnabled = false;
+			for(String provider : mLocationManager.getProviders(true))
+				if(provider.equals("gps")){
+					bGPSEnabled = true;
+					break;
+				}
 	        
-	        if( provider != null ){
-	        	mMyLocation = mLocationManager.getLastKnownLocation(provider);
+	        if( bGPSEnabled ){
+	        	mMyLocation = mLocationManager.getLastKnownLocation("gps");
 	        	mLocationManager.removeUpdates(this);
-	        	mLocationManager.requestLocationUpdates(provider, GPS_UPDATE_INTERVAL, GPS_UPDATE_DISTANCE, this);
+	        	mLocationManager.requestLocationUpdates("gps", GPS_UPDATE_INTERVAL, GPS_UPDATE_DISTANCE, this);
 	        }
 	        else{
 	        	Toast.makeText(this, "Please enable GPS", Toast.LENGTH_LONG).show();
