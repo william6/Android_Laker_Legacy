@@ -93,6 +93,10 @@
 			android:label="BioActivity"
 			android:theme="@android:style/Theme.Black.NoTitleBar" >
 		</activity>
-
+		<activity
+			android:name=".BuildingActivity"
+			android:label="BuildingActivity"
+			android:theme="@android:style/Theme.Black.NoTitleBar" >
+		</activity>
     </application>
 </manifest>
