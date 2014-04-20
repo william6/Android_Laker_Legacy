@@ -55,6 +55,7 @@ public class QueryType
 	@Override
 	/**	equals
 	 * @param obj : QueryType object to compare this QueryType object against
+	 * @return true if this query is the same as the provided query
 	 * Compares this QueryType object with a given QueryType object and determines
 	 * if the queries are identical
 	 */
@@ -81,19 +82,18 @@ public class QueryType
 			return false;
 		
 		//if diff search, return false
-		if( this.getSearchField() == null ){
-			if( other.getSearchField() != null )
-				return false;
-		}
-		else{
-			if( other.getSearchField() == null || 
-					!this.getSearchField().equalsIgnoreCase( other.getSearchField() ) )
-				return false;
-		}
+		if( this.getSearchField() == null && other.getSearchField() != null)
+			return false;
+		else if (this.getSearchField() != null && other.getSearchField() == null )
+			return false;
+		else if( this.getSearchField() != null && other.getSearchField() != null &&
+				!this.getSearchField().equals(other.getSearchField()) )
+			return false;
 		
+		//if control reaches this point, everything about the two queries is the same
 		//if we're querying for building distances, we want to continue with the query
 		//so we return false
-		if( this.getSortField().equalsIgnoreCase("Distance from me") )
+		if( this.getSortField().equals(STR_SORT_DISTANCE) )
 			return false;
 		
 		return true;	//otherwise, return true

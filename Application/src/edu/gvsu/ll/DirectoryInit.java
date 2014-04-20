@@ -116,10 +116,8 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 					if( lastKnownLocation != null )
 						status = createMonumentLocationViews( 
 								listCursor, lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
-					else{
-						lAdapter.addItem(new ListItemView( context ));	//create blank item
+					else
 						status = ERR_NO_LOCATION;
-					}
 				}
 				else
 					status = createMonumentViews( listCursor, sortBy );
@@ -190,11 +188,19 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		
 		DirectoryActivity.sInstance.enableInput(true);
 		
-		if( result == ERR_NO_RESULTS )
-			Toast.makeText(DirectoryActivity.sInstance, "No results found.", Toast.LENGTH_LONG).show();
-		else
-			vList.setAdapter(lAdapter);
-		
+		switch(result){
+			case(ERR_NO_LOCATION):
+				lAdapter.addItem(new ListItemView( context ));	//create blank item
+			case(STATUS_OK):
+				vList.setAdapter(lAdapter);
+				break;
+			case(ERR_NO_RESULTS):
+				Toast.makeText(DirectoryActivity.sInstance, "No results found.", Toast.LENGTH_LONG).show();
+				break;
+			case(ERR_CANCEL):
+			case(ERR_GENERAL):
+				break;
+		}			
 		DirectoryActivity.sInstance.resetAsyncTask();
 	}
 	
@@ -223,7 +229,6 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 	 * supports creating headers for Donor names, building names, and building campuses.
 	 */
 	private String addListHeading(Cursor cursor, DBListAdapter adapter, String previousRecord, String sortBy ){
-
 		//determine current record string
 		String header = "";
 		String strThisRecord = "";
@@ -501,7 +506,7 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			double distance = Math.acos( tempA + tempB + tempC ) * EARTH_RADIUS;
 			sortedRecords.add( new DistanceRecord( distance, i ) );
 			cMonument.moveToNext();
-		}
+		}	
 		
 		//if the task has been cancelled, break out
 		if( isCancelled() )
@@ -577,7 +582,7 @@ class DistanceRecord implements Comparable<DistanceRecord>
 	 * @param distance : distance associated with the building in cursor location 'cursorIndex'
 	 * @param cursorIndex : index of building in a cursor
 	 */
-	public DistanceRecord( double distance, int cursorIndex ){
+	public DistanceRecord( double distance, int cursorIndex){
 		mDistance = distance;
 		mCursorIndex = cursorIndex;
 	}

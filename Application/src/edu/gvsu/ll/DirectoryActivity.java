@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.location.Criteria;
+import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -31,9 +32,11 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 
-public class DirectoryActivity extends Activity implements LocationListener
+public class DirectoryActivity extends Activity implements LocationListener, GpsStatus.Listener
 {
 	public static DirectoryActivity sInstance;
+	private final int GPS_UPDATE_INTERVAL = 3000;		//delay time between location updates in ms
+	private final int GPS_UPDATE_DISTANCE = 3;			//distance between location updates in meters (75 meters = 0.05 miles)
 
 	//--	class member variables	--//
 	private ListView 					mListView;
@@ -48,7 +51,6 @@ public class DirectoryActivity extends Activity implements LocationListener
 	private Location					mMyLocation;
 	
 	private final long lSearchTimeout = 1500;		//1.5 second timeout
-//	private final short GPS_ENABLE_REQUEST = 101;
 	
 	public DirectoryActivity(){
 		mCurrQuery = null;
@@ -77,17 +79,17 @@ public class DirectoryActivity extends Activity implements LocationListener
         								QueryType.STR_SORT_MON_NAME,
         								null);
         initDirectory(query, true);
-        
-//        if (location != null) {
-//            System.out.println("Provider " + provider + " has been selected.");
-//            int lat = (int) (location.getLatitude());
-//            int lng = (int) (location.getLongitude());
-//            latituteField.setText(String.valueOf(lat));
-//            longitudeField.setText(String.valueOf(lng));
-//        } else {
-//            latituteField.setText("Provider not available");
-//            longitudeField.setText("Provider not available");
-//        }
+	}
+	
+	@Override
+	/** onResume
+	 * 	When the DirectoryActivity is resumed, the keyboard is displayed automatically.
+	 * 	We'd rather hide it by default so we do that here.
+	 */
+	public void onResume(){
+		super.onResume();
+		if( mListView != null )
+			hideKeyboard(mListView);
 	}
 	
 	/**	onSearchSelected
@@ -327,16 +329,19 @@ public class DirectoryActivity extends Activity implements LocationListener
 	        
 	        if( provider != null ){
 	        	mMyLocation = mLocationManager.getLastKnownLocation(provider);
-	        	mLocationManager.requestLocationUpdates(provider, 500, 5, this);
+	        	mLocationManager.removeUpdates(this);
+	        	mLocationManager.requestLocationUpdates(provider, GPS_UPDATE_INTERVAL, GPS_UPDATE_DISTANCE, this);
 	        }
-	        else
+	        else{
 	        	Toast.makeText(this, "Please enable GPS", Toast.LENGTH_LONG).show();
-	        
+	        	mLocationManager.addGpsStatusListener(this);
+	        }
 		}
 		//disable GPS location updates
-		else if (mLocationManager != null )
+		else if (mLocationManager != null ){
 			mLocationManager.removeUpdates(this);
-		
+			mLocationManager.removeGpsStatusListener(this);
+		}
 		return new QueryType( selectCols, strTable, strSort, strSearch );
 	}
 	
@@ -349,14 +354,38 @@ public class DirectoryActivity extends Activity implements LocationListener
 	public void enableInput(boolean enable){
 		mEnableInput = enable;
 	}
-
+	
+	/** onLocationChanged
+	 *  This is invoked when listening for GPS updates. This function checks to
+	 *  see if the location change is valid (>= 0.01 mile difference)
+	 */
 	public void onLocationChanged(Location location) {
 		//this should only get called if we're listing buildings by distance
 		//if we're sorting by distance from user, re-update query
-		mMyLocation = location;
-		initDirectory( createQuery( getSearch() ), false );
+		if( validLocationChange(location) ){
+			mMyLocation = location;
+			initDirectory( createQuery( getSearch() ), false );
+		}
+	}
+	
+	/** validLocationChange
+	 *  @param location : new location object to compare to current location (mMyLocation)
+	 *  @return true if the new location differs 0.01mi in latitude or longitude from
+	 *  		the current location
+	 */
+	private boolean validLocationChange(Location location){
+		if( mMyLocation == null )
+			return true;	
+		if( Math.abs( mMyLocation.getLatitude()-location.getLatitude()) > 0.0001 )
+			return true;
+		if( Math.abs( mMyLocation.getLongitude()-location.getLongitude()) > 0.0001 )
+			return true;
+		return false;
 	}
 
+	/** onProviderDisabled
+	 * 	Notifies user when GPS has been disabled. Cancels DirectoryInit if one is in progress
+	 */
 	public void onProviderDisabled(String provider) {
 		//if we lose gps, notify user with toast
 		Toast.makeText(this, "GPS disabled", Toast.LENGTH_SHORT).show();
@@ -364,14 +393,26 @@ public class DirectoryActivity extends Activity implements LocationListener
 			mAsyncTask.cancel(true);
 	}
 
+	/** onProviderEnabled
+	 * 	Notifies user if GPS is re-enabled. Updates the view with user's last known position
+	 */
 	public void onProviderEnabled(String provider) {
 		//re-enable sorting distance from user
 		Toast.makeText(this, "GPS enabled", Toast.LENGTH_SHORT).show();
         mMyLocation = mLocationManager.getLastKnownLocation(provider);
         initDirectory( createQuery( getSearch() ), true );
 	}
-
 	public void onStatusChanged(String provider, int status, Bundle extras) {	}
+
+	/** onGpsStatusChanged
+	 * 	When GPS is re-enabled, start receiving updates from GPS
+	 */
+	public void onGpsStatusChanged(int event) {
+		if( event == GpsStatus.GPS_EVENT_STARTED || event == GpsStatus.GPS_EVENT_FIRST_FIX ){
+			mLocationManager.removeUpdates(this);
+			mLocationManager.requestLocationUpdates("gps", GPS_UPDATE_INTERVAL, GPS_UPDATE_DISTANCE, this);
+		}
+	}
 }
 
 
