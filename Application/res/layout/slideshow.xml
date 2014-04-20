@@ -1,11 +1,20 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-  android:id="@+id/slideshow" >
+  	android:id="@+id/slideshow" >
 
-   <ImageView android:id="@+id/imageView"
+   <ImageView android:id="@+id/HOME_imgDonor"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerHorizontal="true"/>
-
-</LinearLayout>
+        android:layout_centerHorizontal="true"
+        android:scaleType="centerCrop" />
+   
+   <ImageView 
+   		android:id="@+id/HOME_imgBanner"
+   		android:layout_width="match_parent"
+   		android:layout_height="wrap_content"
+   		android:layout_centerHorizontal="true"
+   		android:layout_alignParentBottom="true"
+   		android:layout_margin="30dp"
+   		android:src="@drawable/banner" />
+</RelativeLayout>
