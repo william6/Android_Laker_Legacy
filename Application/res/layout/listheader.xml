@@ -3,7 +3,7 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:orientation="horizontal"
-	android:background="#FFFFFFFF" >
+	android:background="@drawable/listheader_background" >
 	
 	<TextView
 		android:id="@+id/LH_txtHeading"
@@ -14,7 +14,7 @@
 		android:typeface="serif"
 		android:textSize="16sp"
 		android:textStyle="bold"
-		android:textColor="#FF000000"
+		android:textColor="@android:color/black"
 		android:gravity="center" >
 		
 	</TextView>

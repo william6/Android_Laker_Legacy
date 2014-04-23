@@ -97,6 +97,17 @@ public class BioActivity extends FragmentActivity {
         		mPageIndicators[i].setImageBitmap( mImgCurrPage );
         	else
         		mPageIndicators[i].setImageBitmap( mImgDimPage );
+        	
+        	class MyListener implements OnClickListener{
+        		private int pageIndex;
+        		public MyListener(int pageIndex){ this.pageIndex = pageIndex; }
+				public void onClick(View arg0) {
+					mPager.setCurrentItem(pageIndex, true);
+				}
+        	};
+        	
+        	mPageIndicators[i].setOnClickListener(new MyListener(i));
+        	
         	layout.addView(mPageIndicators[i]);
         }
 		

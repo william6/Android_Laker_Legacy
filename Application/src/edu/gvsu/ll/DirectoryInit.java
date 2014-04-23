@@ -98,14 +98,14 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 			Cursor listCursor = dbm.query(query);
 			listCursor.moveToFirst();
 			
+			lAdapter = new DBListAdapter(context, listCursor.getCount());
+			
 			if( isCancelled() )
 				return ERR_CANCEL;
 			
 			if(listCursor.getCount() == 0){
 				return ERR_NO_RESULTS;
 			}
-
-			lAdapter = new DBListAdapter(context, listCursor.getCount());
 
 			int status = STATUS_OK;
 			
@@ -189,13 +189,12 @@ public class DirectoryInit extends AsyncTask< QueryType, Void, Integer >
 		DirectoryActivity.sInstance.enableInput(true);
 		
 		switch(result){
+			case(ERR_NO_RESULTS):
+				Toast.makeText(DirectoryActivity.sInstance, "No results found.", Toast.LENGTH_LONG).show();
 			case(ERR_NO_LOCATION):
 				lAdapter.addItem(new ListItemView( context ));	//create blank item
 			case(STATUS_OK):
 				vList.setAdapter(lAdapter);
-				break;
-			case(ERR_NO_RESULTS):
-				Toast.makeText(DirectoryActivity.sInstance, "No results found.", Toast.LENGTH_LONG).show();
 				break;
 			case(ERR_CANCEL):
 			case(ERR_GENERAL):
