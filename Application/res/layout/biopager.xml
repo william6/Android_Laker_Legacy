@@ -11,8 +11,18 @@
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:id="@+id/PAG_rNav"
-		android:padding="10dp"
+		android:paddingLeft="10dp"
+		android:paddingRight="10dp"
+		android:paddingBottom="5dp"
 		android:layout_alignParentBottom="true" >
+		
+		<!-- top border -->
+		<View
+			android:layout_width="match_parent"
+			android:layout_height="4dp"
+			android:id="@+id/PAG_border"
+			android:background="@drawable/biopager_border"
+			android:layout_alignParentTop="true" />
 		
 		<!-- left page button -->
 		<ImageView 
@@ -37,6 +47,7 @@
 			android:id="@+id/PAG_lPages"
 			android:orientation="horizontal"
 			android:gravity="center"
+			android:layout_marginTop="9dp"
 			android:layout_toRightOf="@id/PAG_imgLeftPage"
 			android:layout_toLeftOf="@id/PAG_imgRightPage" >
 		</LinearLayout>

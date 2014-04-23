@@ -433,7 +433,10 @@ class DBListAdapter extends BaseAdapter
 	private int nMaxItems;
 	
 	public DBListAdapter(Context ctx, int maxCount){
-		nMaxItems = maxCount;
+		if(maxCount <= 0 )
+			nMaxItems = 1;
+		else
+			nMaxItems = maxCount;
 		listItems = new ArrayList<View>();
 	}
 	
