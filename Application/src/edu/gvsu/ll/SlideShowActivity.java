@@ -69,7 +69,7 @@ public class SlideShowActivity extends Activity {
 	public void updateUI(){
 		int currentInt=n+1;
 		if(currentInt<=10000){
-			refreshHandler.sleep(7500);
+			refreshHandler.sleep(5000);
 			n = currentInt;
 			if(i<imgid.length){
 				imageView.setImageResource(imgid[i]);
