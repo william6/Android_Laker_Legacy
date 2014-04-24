@@ -21,7 +21,7 @@
 			android:layout_width="match_parent"
 			android:layout_height="4dp"
 			android:id="@+id/PAG_border"
-			android:background="@drawable/biopager_border"
+			android:background="@drawable/line_border"
 			android:layout_alignParentTop="true" />
 		
 		<!-- left page button -->

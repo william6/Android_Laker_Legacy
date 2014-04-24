@@ -76,12 +76,12 @@ public class BioActivity extends FragmentActivity {
 		});
 		
 		//load all page images (do this so we don't ever have to load them again as user moves through pages)
-		mImgDimPage 	= loadImage("page_dim");
-        mImgCurrPage 	= loadImage("page_current");
-        mImgDimLeft 	= loadImage("page_left_dim");
-        mImgLeft 		= loadImage("page_left");
-        mImgDimRight 	= loadImage("page_right_dim");
-        mImgRight 		= loadImage("page_right");
+		mImgDimPage 	= loadImage("ic_page_dim");
+        mImgCurrPage 	= loadImage("ic_page_current");
+        mImgDimLeft 	= loadImage("ic_page_left_dim");
+        mImgLeft 		= loadImage("ic_page_left");
+        mImgDimRight 	= loadImage("ic_page_right_dim");
+        mImgRight 		= loadImage("ic_page_right");
 		
         //set the correct page images
         mVPageNum = (TextView) findViewById(R.id.PAG_txtPageNum);

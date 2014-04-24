@@ -14,12 +14,16 @@ import android.widget.TabHost.TabSpec;
 
 @SuppressWarnings("deprecation")
 public class MainActivity extends TabActivity {
+	
+	public static MainActivity sInstance;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-
+		
+		sInstance = this;
+		
 		loadDatabaseFile();
 		Resources resources = getResources();
 		TabHost tabHost = getTabHost();
@@ -28,28 +32,28 @@ public class MainActivity extends TabActivity {
 		Intent in_Home = new Intent().setClass(this, SlideShowActivity.class);
 		TabSpec tabSpecHome = tabHost
 				.newTabSpec("Home")
-				.setIndicator("", resources.getDrawable(R.drawable.ic_home))
+				.setIndicator("Home", resources.getDrawable(R.drawable.selector_home))
 				.setContent(in_Home);
 
 		// Directory tab
 		Intent in_Directory = new Intent().setClass(this, DirectoryActivity.class);
 		TabSpec tabSpecDirectory = tabHost
 				.newTabSpec("Directory")
-				.setIndicator("", resources.getDrawable(R.drawable.ic_directory))
+				.setIndicator("Directory", resources.getDrawable(R.drawable.selector_directory))
 				.setContent(in_Directory);
 
 		// Near Me tab
 		Intent in_NearMe = new Intent().setClass(this, MapActivity.class);
 		TabSpec tabSpecNearMe = tabHost
 				.newTabSpec("Near Me")
-				.setIndicator("", resources.getDrawable(R.drawable.ic_maps))
+				.setIndicator("Near Me", resources.getDrawable(R.drawable.selector_maps))
 				.setContent(in_NearMe);
 
 		// Donate tab
 		Intent in_Donate = new Intent().setClass(this, DonateActivity.class);
 		TabSpec tabSpecDonate = tabHost
-				.newTabSpec("Donate")
-				.setIndicator("", resources.getDrawable(R.drawable.ic_donate))
+				.newTabSpec("Give")
+				.setIndicator("Give", resources.getDrawable(R.drawable.selector_donate))
 				.setContent(in_Donate);
 
 		// add all tabs 

@@ -76,8 +76,8 @@
 		android:id="@+id/DIR_ListRoot"
 		android:layout_below="@id/DIR_lOptions"
 		android:smoothScrollbar="false"
+		android:isScrollContainer="false"
 		android:fadeScrollbars="false"
 		android:dividerHeight="2dp" >
 	</ListView>
-	
 </RelativeLayout>
