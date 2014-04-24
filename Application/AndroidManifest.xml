@@ -75,6 +75,7 @@
 		<activity
 			android:name=".DirectoryActivity"
 			android:label="DirectoryActivity"
+			android:windowSoftInputMode="adjustPan"
 			android:theme="@android:style/Theme.Black.NoTitleBar" >
 		</activity>
 		<activity
